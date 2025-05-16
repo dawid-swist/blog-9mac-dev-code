@@ -8,7 +8,7 @@ This repository contains practical examples and code snippets that accompany the
 * **Scala**
 * **Linux**
 * **Unix**
-* *8MacOS**
+* **MacOS**
 * **Swift and Apple ecosystem**
 * **Cloud Technologies**
 
