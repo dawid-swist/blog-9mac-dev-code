@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- Water implementation -->
+    <bean id="water" class="dev.nmac.blog.examples.springframework6.impl.FilteredWater"/>
+
+    <!-- Coffee bean implementations -->
+    <bean id="arabicaBeans" class="dev.nmac.blog.examples.springframework6.impl.ArabicaBeans"/>
+    <bean id="robustaBeans" class="dev.nmac.blog.examples.springframework6.impl.RobustaBeans"/>
+    <bean id="libericaBeans" class="dev.nmac.blog.examples.springframework6.impl.LibericaBeans"/>
+
+    <!-- Coffee maker with constructor injection -->
+    <bean id="coffeeMaker" class="dev.nmac.blog.examples.springframework6.CoffeeMaker">
+        <constructor-arg ref="water"/>
+        <constructor-arg>
+            <list>
+                <ref bean="arabicaBeans"/>
+                <ref bean="robustaBeans"/>
+                <ref bean="libericaBeans"/>
+            </list>
+        </constructor-arg>
+    </bean>
+</beans>

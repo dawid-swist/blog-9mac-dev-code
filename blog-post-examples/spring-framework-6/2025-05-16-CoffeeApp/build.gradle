@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'dev.nmac.blog.examples.springframework6'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+def springVersion = '6.2.7'
+
+dependencies {
+    implementation "org.springframework:spring-context:${springVersion}"
+    implementation "org.springframework:spring-core:${springVersion}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+application {
+    mainClass = 'CoffeeApp'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.register('runCoffeePureApp', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'dev.nmac.blog.examples.springframework6.CoffeePureApp'
+}
+
+tasks.register('runCoffeeSpiApp', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'dev.nmac.blog.examples.springframework6.CoffeeSpiApp'
+}
+
+tasks.register('runCoffeeSpring XmlApp', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'dev.nmac.blog.examples.springframework6.CoffeeXmlApp'
+}
+
+tasks.register('runCoffeeSpringConfigApp', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'dev.nmac.blog.examples.springframework6.CoffeeSpringConfigApp'
+}
