@@ -472,13 +472,6 @@ var list = new ArrayList<String>(); // Too specific
 4. **Remember limitations**: Only local variables, requires initialization
 5. **Java's var is conservative** compared to other languages - by design
 
-### Check Your Understanding
-
-- [ ] Do you understand the difference between var and dynamic typing?
-- [ ] Can you name 3 places where var does NOT work?
-- [ ] Do you know the pitfall with ArrayList vs List type inference?
-- [ ] Can you access custom methods in anonymous classes using var?
-
 ### Coming Up Next
 
 **Part 2: Records (JEP 395)** - Data classes in Java 16
