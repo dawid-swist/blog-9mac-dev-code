@@ -1,0 +1,143 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'dev.nmac.blog.examples'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass = 'dev.nmac.blog.examples.java17.HelloWorld'
+}
+
+task runHelloWorld(type: JavaExec) {
+    group = 'application'
+    description = 'Run Hello World application'
+    mainClass = 'dev.nmac.blog.examples.java17.HelloWorld'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+// Part 1: var keyword examples
+task runVarCollections(type: JavaExec) {
+    group = 'part1'
+    description = 'Run var with collections example'
+    mainClass = 'dev.nmac.blog.examples.java17.part1.VarCollectionsExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runVarAnonymousClass(type: JavaExec) {
+    group = 'part1'
+    description = 'Run var with anonymous classes example'
+    mainClass = 'dev.nmac.blog.examples.java17.part1.VarAnonymousClassExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runVarIntersectionTypes(type: JavaExec) {
+    group = 'part1'
+    description = 'Run var with intersection types example'
+    mainClass = 'dev.nmac.blog.examples.java17.part1.VarIntersectionTypesExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runVarLimitations(type: JavaExec) {
+    group = 'part1'
+    description = 'Run var limitations and pitfalls example'
+    mainClass = 'dev.nmac.blog.examples.java17.part1.VarLimitationsExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runDataProcessorSolution(type: JavaExec) {
+    group = 'part1'
+    description = 'Run DataProcessor solution (exercise)'
+    mainClass = 'dev.nmac.blog.examples.java17.part1.exercises.DataProcessorSolution'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runAllPart1Examples {
+    group = 'part1'
+    description = 'Run all Part 1 examples sequentially'
+    dependsOn runVarCollections, runVarAnonymousClass, runVarIntersectionTypes, runVarLimitations, runDataProcessorSolution
+    doLast {
+        println ''
+        println '=========================================='
+        println 'All Part 1 examples completed!'
+        println 'See output above for results.'
+        println '=========================================='
+    }
+}
+
+// Part 2: Records examples
+task runBasicRecordExample(type: JavaExec) {
+    group = 'part2'
+    description = 'Run basic records example'
+    mainClass = 'dev.nmac.blog.examples.java17.part2.BasicRecordExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runGenericRecordExample(type: JavaExec) {
+    group = 'part2'
+    description = 'Run generic records example'
+    mainClass = 'dev.nmac.blog.examples.java17.part2.GenericRecordExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runRecordMethodsExample(type: JavaExec) {
+    group = 'part2'
+    description = 'Run records with custom methods example'
+    mainClass = 'dev.nmac.blog.examples.java17.part2.RecordMethodsExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runRecordInterfaceExample(type: JavaExec) {
+    group = 'part2'
+    description = 'Run records implementing interfaces example'
+    mainClass = 'dev.nmac.blog.examples.java17.part2.RecordInterfaceExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runNestedRecordsExample(type: JavaExec) {
+    group = 'part2'
+    description = 'Run nested records example'
+    mainClass = 'dev.nmac.blog.examples.java17.part2.NestedRecordsExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runRecordPerformanceExample(type: JavaExec) {
+    group = 'part2'
+    description = 'Run record performance examples'
+    mainClass = 'dev.nmac.blog.examples.java17.part2.RecordPerformanceExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runAllPart2Examples {
+    group = 'part2'
+    description = 'Run all Part 2 examples sequentially'
+    dependsOn runBasicRecordExample, runGenericRecordExample, runRecordMethodsExample, runRecordInterfaceExample, runNestedRecordsExample, runRecordPerformanceExample
+    doLast {
+        println ''
+        println '=========================================='
+        println 'All Part 2 examples completed!'
+        println 'See output above for results.'
+        println '=========================================='
+    }
+}
