@@ -11,7 +11,7 @@ permissions:
   checks: write
 
 jobs:
-  main:
+  build-gradle-project:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -23,9 +23,35 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build and test
+      - name: Display Java version
+        run: java -version && javac -version
+
+      - name: Display Gradle version
+        run: ./gradlew --version
+
+      - name: Validate Gradle wrapper
+        run: ./gradlew wrapper --validate-only
+
+      - name: Clean build directory
+        run: ./gradlew clean --info
+
+      - name: Build project
         id: gradle-build
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon --info --stacktrace
+
+      - name: Display build results summary
+        if: always()
+        run: |
+          echo "=== Build Summary ==="
+          echo "Build Status: ${{ job.status }}"
+          if [ -d "build/reports" ]; then
+            echo "Build reports generated:"
+            find build/reports -type f -name "*.html" -o -name "*.xml" | head -20
+          fi
+          if [ -d "build/test-results" ]; then
+            echo "Test results found:"
+            find build/test-results -type f -name "*.xml" | head -20
+          fi
 
       - name: Publish JUnit Test Report
         if: always()
@@ -34,3 +60,12 @@ jobs:
           name: JUnit Tests
           path: '**/build/test-results/test/*.xml'
           reporter: java-junit
+
+      - name: Upload build artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            **/build/reports/
+            **/build/test-results/
