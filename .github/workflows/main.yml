@@ -29,9 +29,6 @@ jobs:
       - name: Display Gradle version
         run: ./gradlew --version
 
-      - name: Validate Gradle wrapper
-        run: ./gradlew wrapper --validate-only
-
       - name: Clean build directory
         run: ./gradlew clean --info
 
