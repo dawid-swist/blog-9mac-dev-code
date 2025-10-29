@@ -500,10 +500,10 @@ var list = new ArrayList<String>(); // Too specific
 
 #### Code Repository
 
-- **GitHub Repository - blog-9mac-dev-code**: [github.com/yourusername/blog-9mac-dev-code](https://github.com/yourusername/blog-9mac-dev-code)
+- **GitHub Repository - blog-9mac-dev-code**: [github.com/dawid-swist/blog-9mac-dev-code](https://github.com/dawid-swist/blog-9mac-dev-code)
   Contains all working examples from this article series, including JUnit tests and Gradle build configurations. Clone this repository to run examples locally and experiment with the code:
   ```bash
-  git clone https://github.com/yourusername/blog-9mac-dev-code.git
+  git clone https://github.com/dawid-swist/blog-9mac-dev-code.git
   cd blog-post-examples/java/2025-10-25-java17-features-every-senior-developer-should-know
   ../../gradlew test
   ```

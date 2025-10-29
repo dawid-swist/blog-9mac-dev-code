@@ -1445,10 +1445,10 @@ We'll explore how sealed classes combine with records to create powerful, type-s
 
 #### Code Repository
 
-- **GitHub Repository**: [github.com/yourusername/blog-9mac-dev-code](https://github.com/yourusername/blog-9mac-dev-code)
+- **GitHub Repository**: [github.com/dawid-swist/blog-9mac-dev-code](https://github.com/dawid-swist/blog-9mac-dev-code)
   All examples from this article with full tests:
   ```bash
-  git clone https://github.com/yourusername/blog-9mac-dev-code.git
+  git clone https://github.com/dawid-swist/blog-9mac-dev-code.git
   cd blog-post-examples/java/2025-10-25-java17-features-every-senior-developer-should-know
   ../../gradlew test
   ```

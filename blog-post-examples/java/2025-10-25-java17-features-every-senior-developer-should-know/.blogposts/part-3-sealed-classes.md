@@ -2031,9 +2031,9 @@ Pattern matching and sealed classes together bring functional programming concep
 **All code examples from this article are available in the GitHub repository:**
 
 ```bash
-git clone https://github.com/blog-9mac-dev/java-17-features.git
-cd java-17-features/sealed-classes
-./gradlew test
+git clone https://github.com/dawid-swist/blog-9mac-dev-code.git
+cd blog-post-examples/java/2025-10-25-java17-features-every-senior-developer-should-know
+../../gradlew test
 ```
 
 See you in Part 4, where we'll unlock the full power of sealed classes with pattern matching!
