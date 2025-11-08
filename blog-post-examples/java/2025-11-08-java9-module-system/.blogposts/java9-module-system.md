@@ -2,302 +2,115 @@
 
 ## Introduction
 
-Java 9 introduced the **Java Platform Module System (JPMS)**, a major architectural feature that fundamentally changed how we organize, encapsulate, and manage dependencies in large Java applications. Before modules, Java used packages as the only organizational unit above classes, leading to weak encapsulation and unclear dependency relationships. The module system adds a higher level of abstraction that groups related packages together while enforcing explicit visibility control and dependency management.
+Java 9 introduced the **Java Platform Module System (JPMS)**, a major architectural feature that fundamentally changed how we organize, encapsulate, and manage dependencies in large Java applications. Before modules, Java used packages as the only organizational unit above classes, leading to weak encapsulation and unclear dependency relationships.
 
 The module system addresses several critical problems that plagued Java applications for decades:
 
-- **Weak Encapsulation**: Before Java 9, any public class was globally accessible through reflection, providing almost no real encapsulation
-- **Version Conflicts**: Packages could be split across multiple JAR files ("fragile base class problem"), causing version incompatibilities
-- **Unclear Dependencies**: The classpath made it difficult to understand which modules depend on which, leading to complex dependency graphs
-- **Large Runtime Footprint**: The entire JDK was monolithic; developers couldn't create minimal Java installations
-- **Scale Issues**: Large enterprise applications struggled with maintainability due to unclear module boundaries
+- **Weak Encapsulation** - Any public class was globally accessible; no real encapsulation existed
+- **Version Conflicts** - Packages could split across JAR files, causing incompatibilities
+- **Unclear Dependencies** - The classpath made it hard to understand module relationships
+- **Large Runtime Footprint** - The entire JDK was monolithic; you couldn't create minimal Java installations
+- **Scale Issues** - Large applications struggled with maintainability due to unclear module boundaries
 
-The module system solves these problems through three key mechanisms: **strong encapsulation** (packages are private by default), **explicit dependencies** (all module relationships must be declared), and **platform modularity** (the JDK itself is modularized).
-
-## Understanding the Module System
-
-A module is a named, self-contained unit that groups related packages and resources together. Every module has a **module descriptor** (`module-info.java`) that declares its name, dependencies, exported packages, and services. This descriptor is compiled to `module-info.class` and becomes part of the compiled module.
-
-The module system operates in three execution phases:
-
-1. **Compile-time** - `javac` validates module declarations and dependencies
-2. **Link-time** - `jlink` can create custom runtime images with only needed modules
-3. **Run-time** - `java` enforces module boundaries and visibility rules
-
-### Example 1: Understanding Module Fundamentals
-
-The module system works by grouping packages into higher-level units. When you access a module at runtime, you can introspect its metadata, verify relationships, and understand its structure.
-
-```java
-Module currentModule = BasicModuleExample.class.getModule();
-
-// Check if this is a named module
-boolean isNamed = currentModule.isNamed();
-String moduleName = currentModule.getName();
-
-// Get module descriptor with metadata
-var descriptor = currentModule.getDescriptor();
-if (descriptor != null) {
-    Set<String> packages = descriptor.packages();
-    Set<ModuleDescriptor.Requires> requires = descriptor.requires();
-    Set<ModuleDescriptor.Exports> exports = descriptor.exports();
-}
-
-// Access java.base (always available, always named)
-Module javaBase = Object.class.getModule();  // "java.base"
-```
-
-**Unit Tests (BDD Style):**
-
-```java
-@Test
-@DisplayName("Should retrieve current module information")
-void shouldRetrieveCurrentModuleInformation() {
-    Module currentModule = BasicModuleExampleTest.class.getModule();
-    assertNotNull(currentModule);
-
-    // java.base is always a named module
-    Module javaBase = Object.class.getModule();
-    assertTrue(javaBase.isNamed());
-    assertNotNull(javaBase.getName());
-    assertEquals("java.base", javaBase.getName());
-}
-
-@Test
-@DisplayName("Should have module descriptor with metadata")
-void shouldHaveModuleDescriptorWithMetadata() {
-    Module javaBase = Object.class.getModule();
-    var descriptor = javaBase.getDescriptor();
-
-    assertNotNull(descriptor);
-    assertNotNull(descriptor.packages());
-    assertTrue(descriptor.packages().contains("java.lang"));
-    assertFalse(descriptor.requires().isEmpty());
-}
-
-@Test
-@DisplayName("Should distinguish between named and unnamed modules")
-void shouldDistinguishBetweenNamedAndUnnamedModules() {
-    // java.base is always a named module
-    Module javaBase = Object.class.getModule();
-    assertTrue(javaBase.isNamed());
-    assertNotNull(javaBase.getName());
-
-    // Code loaded via classpath (without module-info.java)
-    // becomes part of "unnamed module"
-}
-```
-
-**Output:**
-```
-Current Module Information:
-  Module Name: java.base
-  Is Named: true
-  Module Descriptor: java.base
-
-Module Descriptor:
-  Packages: [java.lang, java.util, java.io, ...]
-  Requires: [transitive java.base, ...]
-  Exports: [java.lang, java.util, ...]
-
-Key Insights:
-1. Module System Hierarchy:
-   Module > Packages > Classes
-
-2. Module Descriptor (module-info.java):
-   - Located at module root
-   - Defines module name and directives
-   - Compiled to module-info.class
-
-3. Strong Encapsulation:
-   - Packages are module-private by default
-   - Must explicitly export packages
-   - Reflection access restricted by default
-
-4. Two Types of Modules:
-   - Named modules (have module-info.java)
-   - Unnamed module (legacy code on classpath)
-```
-
-**Key Insight:** The module system establishes a clear hierarchy where modules are the primary organizational unit. Unlike packages (which organize classes) or JAR files (which are deployment artifacts), modules are architectural units that explicitly declare their purpose, dependencies, and public API. Every named module has a descriptor that serves as a contract between the module and its consumers. The fact that `java.base` is always present and named ensures that code can always be organized into modules, even if it doesn't explicitly declare module-info.java (in which case it becomes part of the unnamed module).
+The module system solves these through three key mechanisms: **strong encapsulation** (packages are private by default), **explicit dependencies** (all relationships declared), and **platform modularity** (the JDK itself is modularized).
 
 ---
 
-## Declaring and Managing Module Dependencies
+# PART 1: How Modules Work (Fundamentals)
 
-One of the strongest benefits of the module system is explicit dependency management. In the pre-module era, classpath ordering and JAR versions could lead to subtle bugs. With modules, all dependencies must be explicitly declared in the module descriptor using the `requires` directive. The module system supports three forms: `requires` (mandatory), `requires transitive` (re-exported), and `requires static` (optional).
+## What is a Module?
 
-### Example 2: Module Dependencies and Requires Directives
+A module is a **named, self-contained unit** that groups related packages and resources together. Every module has a **module descriptor** (`module-info.java`) that declares its name, dependencies, exported packages, and services.
 
-Module dependencies are declared using the `requires` directive. Every module implicitly requires `java.base`, but all other dependencies must be explicit. Dependencies can be transitive (automatically required by consumers) or static (compile-time only, optional at runtime).
+```
+Module Hierarchy:
+├── Module (named unit)
+│   ├── Package (java.lang)
+│   │   ├── Class (String)
+│   │   └── Class (Integer)
+│   ├── Package (java.util)
+│   │   ├── Class (ArrayList)
+│   │   └── Class (HashMap)
+│   └── Resources (config files, etc.)
+```
+
+### Module Descriptor (module-info.java)
 
 ```java
-Module currentModule = ModuleDependenciesExample.class.getModule();
-ModuleDescriptor descriptor = currentModule.getDescriptor();
+module com.example.api {
+    // Dependencies
+    requires java.base;
+    requires com.example.core;
 
-// Examine requires directives
-if (descriptor != null && !descriptor.requires().isEmpty()) {
-    descriptor.requires().stream().limit(3).forEach(req -> {
-        System.out.println("  Module: " + req.name());
+    // Exports
+    exports com.example.api;
 
-        boolean isTransitive = req.modifiers()
-            .contains(ModuleDescriptor.Requires.Modifier.TRANSITIVE);
-        System.out.println("    Transitive: " + isTransitive);
-    });
+    // Services
+    uses com.example.service.Provider;
+}
+```
+
+## Core Concept 1: Strong Encapsulation by Default
+
+**Packages are private by default.** Only exported packages are accessible outside the module.
+
+**Before Java 9:**
+```java
+public class InternalHelper {  // Anyone can use this!
+    public void internalMethod() { }
+}
+```
+
+**After Java 9:**
+```java
+// module-info.java
+module mylib {
+    exports com.mylib.api;  // Only this is accessible
+    // com.mylib.internal is PRIVATE
 }
 
-// Check if this module can read another
+// Other module trying to use it:
+import com.mylib.api.PublicClass;          // ✅ Works
+// import com.mylib.internal.InternalHelper; // ❌ Compile error!
+```
+
+### Example 1: Package Exports and Encapsulation
+
+Strong encapsulation means developers can safely refactor internal code.
+
+```java
+// Check what packages are exported
 Module javaBase = Object.class.getModule();
-boolean canRead = currentModule.canRead(javaBase);
-System.out.println("Can read java.base: " + canRead);
+var descriptor = javaBase.getDescriptor();
 
-// Every module can read itself
-assertTrue(javaBase.canRead(javaBase));
-```
-
-**Unit Tests (BDD Style):**
-
-```java
-@Test
-@DisplayName("Should show every module implicitly requires java.base")
-void shouldShowEveryModuleImplicitlyRequiresJavaBase() {
-    Module currentModule = ModuleDependenciesExampleTest.class.getModule();
-    Module javaBase = Object.class.getModule();
-
-    assertTrue(currentModule.canRead(javaBase));
-    assertEquals("java.base", javaBase.getName());
-}
-
-@Test
-@DisplayName("Should allow querying module dependencies")
-void shouldAllowQueryingModuleDependencies() {
-    Module javaLogging = java.util.logging.Logger.class.getModule();
-    var descriptor = javaLogging.getDescriptor();
-
-    assertNotNull(descriptor);
-    assertNotNull(descriptor.requires());
-    assertFalse(descriptor.requires().isEmpty());
-}
-
-@Test
-@DisplayName("Should distinguish between static and non-static requires")
-void shouldDistinguishBetweenStaticAndNonStaticRequires() {
-    Module javaLogging = java.util.logging.Logger.class.getModule();
-    var descriptor = javaLogging.getDescriptor();
-
-    for (var require : descriptor.requires()) {
-        var mods = require.modifiers();
-        boolean isStatic = mods.contains(
-            ModuleDescriptor.Requires.Modifier.STATIC);
-        // Can be static or non-static
-        assertNotNull(isStatic);
-    }
-}
-```
-
-**Output:**
-```
-Module Dependencies (requires directives):
-  - Module: java.base
-    Transitive: false
-  - Module: java.logging
-    Transitive: true
-
-Module Relationship Queries:
-  Current module can read java.base: true
-
-Types of Requires Directives:
-
-1. requires <module>:
-   - Mandatory dependency
-   - Required at compile and runtime
-   - Not transitive (implicit)
-   Example: requires java.base;
-
-2. requires transitive <module>:
-   - Re-exports dependencies
-   - Consumers of this module automatically get access
-   - Used for facade modules
-   Example: requires transitive java.logging;
-
-3. requires static <module>:
-   - Optional dependency
-   - Required at compile time only
-   - Not required at runtime
-   - Useful for optional features
-   Example: requires static com.logging.advanced;
-```
-
-**Key Insight:** The explicit requires declaration creates a dependency graph that the JVM can validate and enforce. Unlike the classpath (where classpath order mattered and visibility was implicit), module dependencies are unambiguous. The distinction between `requires` (mandatory) and `requires static` (optional) allows libraries to depend on features conditionally. Transitive dependencies reduce consumer burden—if module A requires module B transitively, then any module requiring A automatically gets B without having to declare it explicitly.
-
----
-
-## Strong Encapsulation and Package Exports
-
-Before Java 9, "public" meant globally accessible. With modules, "public" alone is insufficient—packages must be explicitly exported to be accessible outside the module. This strong encapsulation is enforced by the JVM and prevents accidental dependencies on internal implementation classes.
-
-### Example 3: Package Exports and Visibility Control
-
-Packages are module-private by default. To make packages accessible to other modules, they must be explicitly exported using the `exports` directive. This allows clear separation between public API and internal implementation.
-
-```java
-Module javaBase = Object.class.getModule();
-ModuleDescriptor descriptor = javaBase.getDescriptor();
-
-// List all exported packages
-System.out.println("Exported Packages:");
+// List exported packages
 descriptor.exports().forEach(export -> {
-    System.out.println("  Package: " + export.source());
-    if (!export.targets().isEmpty()) {
-        System.out.println("    Exported to: " + export.targets());
-    } else {
-        System.out.println("    Exported to: all modules");
-    }
+    System.out.println("Exported: " + export.source());
 });
 
 // Check if package is exported
-boolean isExported = javaBase.isExported("java.lang");
-System.out.println("java.lang exported: " + isExported);
-
-// Check if package is exported to specific module
-Module currentModule = ModuleExportsExample.class.getModule();
-boolean exportedToModule = javaBase.isExported("java.lang", currentModule);
-System.out.println("java.lang exported to current module: " + exportedToModule);
+boolean exported = javaBase.isExported("java.lang");
+System.out.println("java.lang exported: " + exported);
 ```
 
-**Unit Tests (BDD Style):**
+**Unit Tests:**
 
 ```java
 @Test
-@DisplayName("Should check if package is unconditionally exported")
-void shouldCheckIfPackageIsUnconditionallyExported() {
-    Module javaBase = Object.class.getModule();
-
-    // java.lang should be exported from java.base
-    assertTrue(javaBase.isExported("java.lang"));
-    assertTrue(javaBase.isExported("java.util"));
+@DisplayName("Should access classes from exported packages")
+void shouldAccessClassesFromExportedPackages() {
+    // java.util is exported from java.base
+    List<String> list = new ArrayList<>();  // ✅ Works
+    list.add("test");
+    assertEquals(1, list.size());
 }
 
 @Test
-@DisplayName("Should demonstrate that packages are module-private by default")
+@DisplayName("Should demonstrate packages are private by default")
 void shouldDemonstrateThatPackagesAreModulePrivateByDefault() {
     Module javaBase = Object.class.getModule();
     var descriptor = javaBase.getDescriptor();
 
-    var allPackages = descriptor.packages();
-    var exportedPackages = descriptor.exports();
-
-    // Not all packages are exported - some are internal
-    assertTrue(exportedPackages.size() <= allPackages.size());
-}
-
-@Test
-@DisplayName("Should enable safe package refactoring")
-void shouldEnableSafePackageRefactoring() {
-    Module javaBase = Object.class.getModule();
-    var descriptor = javaBase.getDescriptor();
-
-    // Packages that are NOT exported are private implementation details
     var allPackages = descriptor.packages();
     var exportedPackages = descriptor.exports().stream()
         .map(e -> e.source())
@@ -307,86 +120,326 @@ void shouldEnableSafePackageRefactoring() {
         .filter(pkg -> !exportedPackages.contains(pkg))
         .toList();
 
-    // These private packages can be safely refactored
-    for (String privatePackage : privatePackages) {
-        assertFalse(javaBase.isExported(privatePackage));
+    // Not all packages are exported - some are internal!
+    assertTrue(exportedPackages.size() <= allPackages.size());
+    assertFalse(privatePackages.isEmpty());
+}
+
+@Test
+@DisplayName("Should enable safe refactoring of internal code")
+void shouldEnableSafeRefactoringOfInternalCode() {
+    Module javaBase = Object.class.getModule();
+    var descriptor = javaBase.getDescriptor();
+
+    // Internal packages (non-exported) are safe to refactor
+    var internalPackages = descriptor.packages().stream()
+        .filter(pkg -> !javaBase.isExported(pkg))
+        .toList();
+
+    // These are internal - no one depends on them
+    for (String pkg : internalPackages) {
+        assertFalse(javaBase.isExported(pkg));
     }
 }
 ```
 
 **Output:**
 ```
-Exported Packages from java.base:
-  Package: java.lang
-    Exported to: all modules (unconditional)
-  Package: java.util
-    Exported to: all modules (unconditional)
-  Package: java.io
-    Exported to: all modules (unconditional)
+Exported Packages:
+  java.lang ✅
+  java.util ✅
+  java.io ✅
+  jdk.internal.* ❌ (private)
+  sun.* ❌ (private)
 
-Runtime Package Visibility Checks:
-  Package 'java.lang':
-    - isExported(unconditionally): true
-
-Export Patterns in module-info.java:
-
-1. Unconditional Export:
-   exports com.example.api;
-   - Package accessible from ALL modules
-   - Public API of your module
-
-2. Selective Export (exports...to):
-   exports com.example.internal to com.partner.module;
-   - Package accessible only to specified modules
-   - Useful for shared internal APIs
-
-3. No Export:
-   // No exports directive for a package
-   - Package is module-private
-   - Hidden from all other modules
+Packages are private by default:
+  Total packages in java.base: 1500+
+  Exported packages: ~60
+  Private packages: ~1440+
 ```
 
-**Key Insight:** Strong encapsulation solves the "fragile base class problem" where internal implementation details became part of the public contract. Before modules, refactoring internal classes was dangerous because external code might depend on them. With modules, internal packages (not exported) are genuinely internal—consumers cannot access them even with reflection. This allows library developers to evolve implementations freely. The reduction in JDK size from ~4000 public classes to ~1300 in `java.base` demonstrates how effective this encapsulation is.
+**Key Insight:** Strong encapsulation is the most powerful aspect of modules. Before Java 9, library developers had no way to hide internal classes—anyone could use them. Now, internal packages are genuinely internal. The JDK reduced its public surface from ~4000 classes to ~1300 by properly hiding internals. This enables safe evolution.
 
 ---
 
-## Runtime Module Inspection with the Module API
+## Core Concept 2: Explicit Dependencies
 
-The Module API enables runtime introspection of the module system. Applications and frameworks can query module properties, relationships, and configuration at runtime, enabling dynamic behavior and better debugging.
+**All module relationships must be declared** via `requires`. Dependencies are explicit and validated by the JVM.
 
-### Example 4: Module API and Runtime Introspection
+```
+BEFORE (Classpath):
+java -cp lib/*:myapp.jar MyApp
+↓
+No way to know which JARs depend on what
 
-The Module class and ModuleDescriptor provide comprehensive runtime access to module metadata and relationships.
+AFTER (Module System):
+module-info.java: requires com.other.module
+↓
+Dependencies validated, no surprises
+```
+
+### Three Types of Dependencies
+
+#### `requires <module>` - Mandatory
+```java
+module com.example.app {
+    requires java.logging;  // Must be present
+}
+```
+
+#### `requires transitive <module>` - Re-exported
+```java
+module com.example.facade {
+    requires transitive java.logging;  // Consumers get this too
+}
+
+module com.example.client {
+    requires com.example.facade;  // Automatically gets java.logging
+}
+```
+
+#### `requires static <module>` - Optional
+```java
+module com.example.app {
+    requires static com.optional.feature;  // Compile-time only
+}
+```
+
+### Example 2: Module Dependencies
+
+Dependencies between modules are explicit and validated.
+
+```java
+// Check if module can read another
+Module current = MyClass.class.getModule();
+Module javaBase = Object.class.getModule();
+
+boolean canRead = current.canRead(javaBase);
+System.out.println("Can read java.base: " + canRead);  // true
+
+// Every module implicitly requires java.base
+assertTrue(current.canRead(javaBase));
+```
+
+**Unit Tests:**
+
+```java
+@Test
+@DisplayName("Should show every module implicitly requires java.base")
+void shouldShowEveryModuleImplicitlyRequiresJavaBase() {
+    Module current = ModuleDependenciesExampleTest.class.getModule();
+    Module javaBase = Object.class.getModule();
+
+    // Current module can read java.base (implicit requirement)
+    assertTrue(current.canRead(javaBase));
+    assertEquals("java.base", javaBase.getName());
+}
+
+@Test
+@DisplayName("Should distinguish between static and non-static requires")
+void shouldDistinguishBetweenStaticAndNonStaticRequires() {
+    Module javaLogging = java.util.logging.Logger.class.getModule();
+    var descriptor = javaLogging.getDescriptor();
+
+    assertNotNull(descriptor);
+    var requires = descriptor.requires();
+
+    // Check modifiers on each require
+    for (var require : requires) {
+        var mods = require.modifiers();
+        boolean isStatic = mods.contains(
+            ModuleDescriptor.Requires.Modifier.STATIC);
+        boolean isTransitive = mods.contains(
+            ModuleDescriptor.Requires.Modifier.TRANSITIVE);
+        // Can be static, transitive, or both/neither
+    }
+}
+
+@Test
+@DisplayName("Should show all modules can read java.base")
+void shouldShowAllModulesCanReadJavaBase() {
+    Module current = ModuleDependenciesExampleTest.class.getModule();
+    Module javaBase = Object.class.getModule();
+    Module javaLogging = java.util.logging.Logger.class.getModule();
+
+    // All modules can read java.base
+    assertTrue(current.canRead(javaBase));
+    assertTrue(javaLogging.canRead(javaBase));
+    assertTrue(javaBase.canRead(javaBase));  // Reads itself
+}
+```
+
+**Output:**
+```
+Module Dependency Analysis:
+Current module: (unnamed module)
+  Can read java.base: true
+
+java.logging module:
+  Requires: [java.base]
+  Transitive: [no]
+
+Dependency Resolution:
+  Required at compile: ✅
+  Required at runtime: ✅
+  Re-exported: ❌
+```
+
+**Key Insight:** Explicit dependencies create a clear dependency graph that the JVM validates. Unlike the classpath, module relationships are unambiguous. Transitive dependencies allow facade modules to simplify consumption by bundling related modules. Static dependencies enable optional features—code can work without them.
+
+---
+
+## Core Concept 3: Reflection Control
+
+Strong encapsulation extends to reflection. Before Java 9, `setAccessible(true)` always worked. Now, reflection access is also controlled.
+
+```
+BEFORE Java 9:
+Field field = MyClass.class.getDeclaredField("privateField");
+field.setAccessible(true);  // Always works!
+
+AFTER Java 9:
+field.setAccessible(true);  // Throws InaccessibleObjectException
+// Unless package is opened via 'opens' directive
+```
+
+### Example 3: Encapsulation and Reflection
+
+Reflection is restricted unless packages are explicitly opened.
+
+```java
+// Reflection on exported packages works
+Class<?> stringClass = String.class;  // From exported java.lang
+Method method = stringClass.getMethod("toUpperCase");  // ✅ Works
+
+// Non-opened packages block reflection
+// (even with setAccessible(true))
+```
+
+**Unit Tests:**
+
+```java
+@Test
+@DisplayName("Should allow reflection on exported packages")
+void shouldAllowReflectionOnExportedPackages()
+        throws NoSuchMethodException {
+    // String is from exported java.lang
+    Class<?> stringClass = String.class;
+    Module module = stringClass.getModule();
+
+    assertTrue(module.isExported("java.lang"));
+
+    // Reflection on public methods works
+    Method method = stringClass.getMethod("toUpperCase");
+    assertNotNull(method);
+}
+
+@Test
+@DisplayName("Should restrict reflection on non-opened packages")
+void shouldRestrictReflectionOnNonOpenedPackages() {
+    Module javaBase = Object.class.getModule();
+    var descriptor = javaBase.getDescriptor();
+
+    // Some packages are opened, others are closed
+    var openedPackages = descriptor.opens().stream()
+        .map(o -> o.source())
+        .collect(toSet());
+
+    // Closed packages prevent reflection access
+    assertTrue(openedPackages.size() > 0);
+
+    // But not all packages are opened
+    var allPackages = descriptor.packages();
+    var closedPackages = allPackages.stream()
+        .filter(pkg -> !openedPackages.contains(pkg))
+        .toList();
+
+    assertFalse(closedPackages.isEmpty());
+}
+```
+
+**Output:**
+```
+Reflection Access Control:
+  String class exported: true
+  Can use reflection: ✅
+
+Internal packages (not opened):
+  jdk.internal.* - reflection blocked ❌
+  sun.* - reflection blocked ❌
+
+Opened for reflection (via 'opens'):
+  java.lang - ✅ (needed by many frameworks)
+  java.util - ✅ (needed by frameworks)
+```
+
+**Key Insight:** Reflection control prevents even reflection from bypassing encapsulation. Before modules, reflection could access private members of any class. Now, only opened packages allow this. This enables frameworks to work with private members when needed (via `opens`) while keeping other packages truly sealed.
+
+---
+
+## Benefits: Problems Solved
+
+### 1. Weak Encapsulation → Strong Encapsulation
+Internal classes are now genuinely internal. The JDK reduced from ~4000 public classes to ~1300.
+
+### 2. Classpath Hell → Explicit Dependencies
+No more guessing which JARs depend on which. Relationships are declared and validated.
+
+### 3. Large JDK → Modular JDK
+You can create minimal Java installations with only needed modules using `jlink`.
+
+### 4. Version Conflicts → Version Safety
+Modules can't be split; each module has one version. No "split package" problems.
+
+---
+
+# PART 2: Working with Modules at Runtime - The Module API
+
+Now that we understand how modules work, let's explore the **Module API** that lets us query and work with modules at runtime.
+
+## The Module Class and ModuleDescriptor
+
+Java provides the `Module` class to query module information at runtime:
 
 ```java
 Module module = MyClass.class.getModule();
 
-// Get module properties
+// Basic information
 String name = module.getName();
 boolean isNamed = module.isNamed();
 ClassLoader loader = module.getClassLoader();
+
+// Metadata
 ModuleDescriptor descriptor = module.getDescriptor();
 ModuleLayer layer = module.getLayer();
 
-// Query relationships
+// Relationships
 boolean canRead = module.canRead(otherModule);
 boolean isExported = module.isExported("com.example.pkg");
 boolean isOpen = module.isOpen("com.example.pkg");
-boolean canUse = module.canUse(ServiceInterface.class);
-
-// Get metadata
-Set<String> packages = module.getPackages();
-var requires = descriptor.requires();
-var exports = descriptor.exports();
-
-// Dynamic configuration
-module.addReads(otherModule);
-module.addExports("com.internal", otherModule);
-module.addOpens("com.model", otherModule);
-module.addUses(ServiceInterface.class);
 ```
 
-**Unit Tests (BDD Style):**
+### Example 4: Module API Introspection
+
+The Module API enables runtime inspection of module metadata and relationships.
+
+```java
+// Get module from any class
+Module module = String.class.getModule();
+System.out.println(module.getName());  // "java.base"
+
+// Get module descriptor
+var descriptor = module.getDescriptor();
+System.out.println(descriptor.packages());
+System.out.println(descriptor.exports());
+System.out.println(descriptor.requires());
+
+// Query relationships
+Module current = MyClass.class.getModule();
+System.out.println(current.canRead(module));
+```
+
+**Unit Tests:**
 
 ```java
 @Test
@@ -394,19 +447,18 @@ module.addUses(ServiceInterface.class);
 void shouldGetModuleFromAnyClass() {
     Module stringModule = String.class.getModule();
     Module listModule = java.util.ArrayList.class.getModule();
-    Module testModule = ModuleReflectionExampleTest.class.getModule();
 
     assertNotNull(stringModule);
     assertNotNull(listModule);
-    assertNotNull(testModule);
 
     // String and ArrayList are in same module
     assertEquals(stringModule.getName(), listModule.getName());
+    assertEquals("java.base", stringModule.getName());
 }
 
 @Test
-@DisplayName("Should retrieve module descriptor")
-void shouldRetrieveModuleDescriptor() {
+@DisplayName("Should retrieve module descriptor with all metadata")
+void shouldRetrieveModuleDescriptorWithAllMetadata() {
     Module javaBase = Object.class.getModule();
     var descriptor = javaBase.getDescriptor();
 
@@ -415,6 +467,26 @@ void shouldRetrieveModuleDescriptor() {
     assertNotNull(descriptor.requires());
     assertNotNull(descriptor.exports());
     assertNotNull(descriptor.packages());
+
+    // java.base has many packages
+    assertFalse(descriptor.packages().isEmpty());
+    assertFalse(descriptor.exports().isEmpty());
+}
+
+@Test
+@DisplayName("Should query module relationships at runtime")
+void shouldQueryModuleRelationshipsAtRuntime() {
+    Module current = ModuleReflectionExampleTest.class.getModule();
+    Module javaBase = Object.class.getModule();
+    Module javaLogging = java.util.logging.Logger.class.getModule();
+
+    // Check various relationships
+    assertTrue(current.canRead(javaBase));
+    assertTrue(current.canRead(javaLogging) || javaLogging == javaBase);
+
+    // Check exports
+    assertTrue(javaBase.isExported("java.lang"));
+    assertTrue(javaBase.isExported("java.lang", current));
 }
 
 @Test
@@ -426,13 +498,79 @@ void shouldEnableRuntimeInspectionOfModuleHierarchy() {
     var config = layer.configuration();
     var allModules = config.modules();
 
+    // Can inspect all modules
     assertFalse(allModules.isEmpty());
 
     // Can find specific modules by name
-    var javaBaseModule = layer.findModule("java.base");
-    assertTrue(javaBaseModule.isPresent());
+    var javaLogging = layer.findModule("java.logging");
+    assertTrue(javaLogging.isPresent());
 }
+```
 
+**Output:**
+```
+Module Information:
+  Module Name: java.base
+  Is Named: true
+  Classloader: jdk.internal.loader.ClassLoaders$PlatformClassLoader
+
+Module Descriptor:
+  Packages: 1400+ packages
+  Requires: [java.base - transitive]
+  Exports: [java.lang, java.util, java.io, ...]
+  Opens: [java.lang, java.util, ...]
+
+Module Relationships:
+  current module can read java.base: true
+  java.base is exported to all: true
+  Module hierarchy: 100+ modules in JDK
+```
+
+**Key Insight:** The Module API enables sophisticated runtime behaviors. Frameworks use it to dynamically request reflection access. Build tools use it to analyze dependencies. IDEs use it to validate configurations. The ability to inspect modules at runtime makes the system flexible enough to support legacy frameworks while providing strong encapsulation by default.
+
+---
+
+## Dynamic Module Configuration
+
+The Module API allows dynamic changes to module relationships at runtime:
+
+```java
+Module current = MyApp.class.getModule();
+Module target = OtherModule.class.getModule();
+
+// Add read edge
+current.addReads(target);
+
+// Export a package
+current.addExports("com.internal", target);
+
+// Open package for reflection
+current.addOpens("com.model", target);
+
+// Add service usage
+current.addUses(ServiceInterface.class);
+```
+
+### Example 5: Dynamic Module Updates
+
+Some applications need to modify module relationships at runtime.
+
+```java
+// Add ability to read another module
+Module current = getMyModule();
+Module required = getOtherModule();
+current.addReads(required);
+
+// Export a package to specific module
+current.addExports("com.internal.api", requiredModule);
+
+// Open package for reflection (framework support)
+current.addOpens("com.model.dto", jpaModule);
+```
+
+**Unit Tests:**
+
+```java
 @Test
 @DisplayName("Should support dynamic module configuration")
 void shouldSupportDynamicModuleConfiguration() {
@@ -441,332 +579,146 @@ void shouldSupportDynamicModuleConfiguration() {
 
     // addReads - dynamically add read edge
     Module result = current.addReads(javaBase);
-    assertSame(current, result);
+    assertSame(current, result);  // Returns self for chaining
 
+    // Verify relationship
     assertTrue(current.canRead(javaBase));
 }
-```
 
-**Output:**
-```
-Module API Basics:
-
-Module.getName():
-  java.base
-
-Module.isNamed():
-  true
-  (true for named modules, false for unnamed)
-
-Module.getClassLoader():
-  jdk.internal.loader.ClassLoaders$PlatformClassLoader@...
-
-Module.getLayer():
-  jdk.internal.module.Modules$1@...
-
-Module.getDescriptor():
-  Returns ModuleDescriptor containing:
-    - name()
-    - requires()
-    - exports()
-    - opens()
-    - uses()
-    - provides()
-    - packages()
-
-Getting Module from Class:
-  Class: java.lang.String
-  Module: java.base
-
-Module Relationship Queries:
-  Module.canRead(Module) - Tests if module reads another
-  Module.isExported(String) - Checks unconditional package export
-  Module.isExported(String, Module) - Checks export to specific module
-  Module.getPackages() - Returns set of package names
-
-Dynamic Module Updates:
-  Module.addReads(Module) - Add read edge
-  Module.addExports(String, Module) - Export package
-  Module.addOpens(String, Module) - Open for reflection
-  Module.addUses(Class<?>) - Add service usage
-```
-
-**Key Insight:** The Module API enables sophisticated runtime behaviors. Frameworks like Spring and Hibernate use the Module API to dynamically request reflection access to internal packages via `addOpens()`. Build tools use it to analyze module dependencies. IDE plugins use it to validate module configurations. The ability to inspect and modify module relationships at runtime makes the module system flexible enough to support legacy frameworks while still providing strong encapsulation by default.
-
----
-
-## Strong Encapsulation and Reflection Control
-
-The module system enforces strong encapsulation not just for normal access, but also for reflection. By default, reflection cannot access private members of non-exported packages. The `opens` and `opens...to` directives explicitly grant reflection access, enabling frameworks while maintaining security.
-
-### Example 5: Strong Encapsulation and Reflection
-
-Strong encapsulation prevents even reflection from bypassing module boundaries. Before Java 9, using `setAccessible(true)` on private members would always succeed. Now, attempting to access members of non-opened packages throws `InaccessibleObjectException`.
-
-```java
-// This works - String is from exported java.lang package
-String str = "test";
-Method method = String.class.getMethod("toUpperCase");
-assertNotNull(method);
-
-// Before Java 9: Would work
-// After Java 9: Requires 'opens java.lang' or runtime --add-opens
-
-// Private packages (not exported) can be safely refactored
-Module javaBase = Object.class.getModule();
-var descriptor = javaBase.getDescriptor();
-
-var allPackages = descriptor.packages();
-var exportedPackages = descriptor.exports().stream()
-    .map(e -> e.source())
-    .toList();
-
-var privatePackages = allPackages.stream()
-    .filter(pkg -> !exportedPackages.contains(pkg))
-    .toList();
-
-// These packages are internal implementation details
-// Consumers don't depend on them
-// Safe to rename, restructure, or remove
-for (String privatePackage : privatePackages) {
-    assertFalse(javaBase.isExported(privatePackage));
-}
-```
-
-**Unit Tests (BDD Style):**
-
-```java
 @Test
-@DisplayName("Should allow accessing classes from exported packages")
-void shouldAllowAccessingClassesFromExportedPackages() {
-    // java.util is exported from java.base
-    List<String> list = new ArrayList<>();
-    list.add("test");
+@DisplayName("Should support dynamic export")
+void shouldSupportDynamicExport() {
+    Module current = ModuleReflectionExampleTest.class.getModule();
+    Module target = Object.class.getModule();
 
-    assertNotNull(list);
-    assertEquals(1, list.size());
+    String packageName = "dev.nmac.blog.examples.java9.modules";
+
+    // Dynamically export package
+    Module result = current.addExports(packageName, target);
+    assertSame(current, result);
 }
 
 @Test
-@DisplayName("Should demonstrate reflection on exported packages works")
-void shouldDemonstrateReflectionOnExportedPackagesWorks()
-        throws NoSuchMethodException {
-    // String is from exported java.lang
-    Class<?> stringClass = String.class;
-    Module module = stringClass.getModule();
+@DisplayName("Should support dynamic opens for reflection")
+void shouldSupportDynamicOpensForReflection() {
+    Module current = ModuleReflectionExampleTest.class.getModule();
+    Module jpaModule = Object.class.getModule();
 
-    assertTrue(module.isExported("java.lang"));
+    // Dynamically open for reflection
+    current.addOpens("dev.nmac.blog.examples.java9.modules",
+                    jpaModule);
 
-    // Reflection on public methods of exported classes works
-    var method = stringClass.getMethod("toUpperCase");
-    assertNotNull(method);
+    assertTrue(current.isOpen("dev.nmac.blog.examples.java9.modules",
+                            jpaModule));
 }
 
 @Test
-@DisplayName("Should enforce strong encapsulation at module level")
-void shouldEnforceStrongEncapsulationAtModuleLevel() {
-    Module javaBase = Object.class.getModule();
-    var descriptor = javaBase.getDescriptor();
+@DisplayName("Should support dynamic service usage")
+void shouldSupportDynamicServiceUsage() {
+    Module current = ModuleReflectionExampleTest.class.getModule();
 
-    var allPackages = descriptor.packages();
-    var exportedPackages = descriptor.exports();
-
-    // Not all packages are exported
-    assertTrue(exportedPackages.size() <= allPackages.size());
-}
-
-@Test
-@DisplayName("Should enable safe refactoring of internal code")
-void shouldEnableSafeRefactoringOfInternalCode() {
-    Module javaBase = Object.class.getModule();
-    var descriptor = javaBase.getDescriptor();
-
-    var privatePackages = descriptor.packages().stream()
-        .filter(pkg -> descriptor.exports().stream()
-            .noneMatch(export -> export.source().equals(pkg)))
-        .toList();
-
-    for (String privatePackage : privatePackages) {
-        assertFalse(javaBase.isExported(privatePackage));
-    }
-}
-
-@Test
-@DisplayName("Should show benefits of strong encapsulation")
-void shouldShowBenefitsOfStrongEncapsulation() {
-    // Benefits demonstrated:
-    Module javaBase = Object.class.getModule();
-    assertTrue(javaBase.isNamed());
-
-    // 1. Reduced attack surface
-    // 2. Clear API contract
-    var exports = javaBase.getDescriptor().exports();
-    assertNotNull(exports);
-
-    // 3. Safe refactoring
-    var packages = javaBase.getPackages();
-    var privatePackages = packages.stream()
-        .filter(pkg -> !javaBase.isExported(pkg))
-        .toList();
-    assertNotNull(privatePackages);
+    // Add service usage
+    Module result = current.addUses(Runnable.class);
+    assertSame(current, result);
 }
 ```
 
 **Output:**
 ```
-Accessing Classes from Exported Packages:
-  Creating ArrayList: java.util.ArrayList
-  Module: java.base
-  Access: ALLOWED (java.util exported unconditionally)
+Dynamic Module Configuration:
+  addReads(targetModule): ✅
+  addExports(package, targetModule): ✅
+  addOpens(package, targetModule): ✅
+  addUses(serviceClass): ✅
 
-Reflection Access Restrictions:
-  Attempting to access String class members: SUCCESS
-  Class module: java.base
-  Package java.lang exported: true
-  Public method access via reflection: ALLOWED
-
-  Attempting setAccessible(true) on private members:
-  In module system: May throw InaccessibleObjectException
-  Unless package is opened via 'opens' directive
-
-Private Packages (Not Exported):
-  jdk.internal.* - PRIVATE (internal implementation)
-  sun.* - PRIVATE (not exported)
-  These are not accessible via import or reflection
-
-Problems Solved by Strong Encapsulation:
-
-Before Java 9 (Weak Encapsulation):
-  - Any public class was always accessible
-  - Reflection could access private members
-  - Internal classes leaked into public API
-  - Hard to evolve internal implementation
-  - Version conflicts from split packages
-  - JDK had ~4000 public classes
-
-After Java 9 (Strong Encapsulation):
-  - Packages private by default
-  - Only exported packages are accessible
-  - Reflection restricted to opened packages
-  - Clear distinction: API vs Implementation
-  - Safe refactoring of internal code
-  - JDK reduced to ~1300 classes in java.base
-  - Version safety (modules don't split)
-
-Module Directives for Encapsulation:
-
-1. exports <package>
-   - Exposes package for compilation and runtime
-   - Public API of the module
-
-2. exports <package> to <module>
-   - Qualified export to specific modules
-   - Shared internal APIs with partners
-
-3. opens <package>
-   - Enables reflection on all members
-   - Used for frameworks (JPA, Jackson, etc.)
-
-4. opens <package> to <module>
-   - Qualified reflection access to specific modules
+Benefits:
+  - Frameworks can request reflection access
+  - Tools can add modules dynamically
+  - Build systems can reconfigure at runtime
+  - Applications can adapt module structure
 ```
 
-**Key Insight:** Strong encapsulation is the most transformative aspect of the module system. Before Java 9, library developers had no way to truly hide internal classes—anyone could use them via reflection. Now, internal implementations are genuinely internal. This enables safe evolution of libraries and frameworks. The JDK team used this capability to dramatically reduce the public surface area of `java.base` while internally using the classes that were previously public. The `opens` directive specifically accommodates frameworks that use reflection on private members, but only for those frameworks explicitly declared.
+**Key Insight:** Dynamic configuration makes the module system flexible. While static declarations in `module-info.java` are the norm, the Module API allows runtime modifications for advanced scenarios. This is how frameworks like Spring use modules—they declare what they need in their module descriptor, but may also dynamically configure modules based on application needs.
 
 ---
 
-## Practical Patterns and Use Cases
+## Practical Use Cases for the Module API
 
-### Facade Module Pattern
-Group multiple modules behind a single public API:
-
+### 1. Frameworks Requesting Reflection Access
 ```java
-// api-module/module-info.java
-module com.example.api {
-    requires transitive com.example.core;
-    requires transitive com.example.util;
-    requires transitive com.example.cache;
+// JPA framework dynamically opens packages
+Module myModule = MyEntity.class.getModule();
+Module jpaModule = javax.persistence.Entity.class.getModule();
 
-    exports com.example.api.public;
-}
+myModule.addOpens("com.example.entity", jpaModule);
 ```
 
-Consumers only need to require the facade:
+### 2. Build Tools Analyzing Dependencies
 ```java
-// consumer-module/module-info.java
-module com.example.consumer {
-    requires com.example.api;  // Gets all transitive dependencies
-}
+// Maven plugin inspecting module structure
+Module module = someClass.getModule();
+var descriptor = module.getDescriptor();
+descriptor.requires().forEach(req -> {
+    System.out.println("Dependency: " + req.name());
+});
 ```
 
-### Internal API Pattern
-Share APIs safely with partner modules:
-
+### 3. IDE Validation
 ```java
-// my-module/module-info.java
-module com.mycompany.database {
-    exports com.mycompany.database.api;           // Public API
-    exports com.mycompany.database.internal       // Shared with partner
-        to com.mycompany.admin;
-}
+// IDE checking if class can be accessed
+Module target = TargetClass.class.getModule();
+String package = "com.example.api";
+boolean accessible = target.isExported(package);
 ```
 
-### Framework Support Pattern
-Allow frameworks to use reflection on specific packages:
-
+### 4. Dynamic Plugin Loading
 ```java
-// model-module/module-info.java
-module com.example.model {
-    exports com.example.model;
-    opens com.example.model.entity to
-        java.persistence,      // JPA
-        com.fasterxml.jackson; // JSON marshalling
-}
-```
+// Application dynamically loading plugin module
+Module pluginModule = loadPluginModule("com.example.plugin");
+Module appModule = AppClass.class.getModule();
 
-### Service Provider Pattern
-Provide pluggable implementations via ServiceLoader:
-
-```java
-// api-module/module-info.java
-module com.example.payment.api {
-    exports com.example.payment;
-    uses com.example.payment.PaymentProvider;
-}
-
-// impl-module/module-info.java
-module com.example.payment.stripe {
-    requires com.example.payment.api;
-    provides com.example.payment.PaymentProvider
-        with com.example.payment.stripe.StripePaymentProvider;
-}
-
-// Consumer
-ServiceLoader<PaymentProvider> loader =
-    ServiceLoader.load(PaymentProvider.class);
-PaymentProvider provider = loader.findFirst().orElseThrow();
+appModule.addReads(pluginModule);  // App can use plugin
 ```
 
 ---
 
-## Benefits and Problems Solved
+## Summary: Two Perspectives of Modules
 
-The module system delivers measurable benefits:
+### Static Perspective (Compile-time)
+- Declared in `module-info.java`
+- Validated by javac
+- JVM verifies at class loading
 
-1. **Reduced Attack Surface** - Only explicitly exported packages are accessible, reducing security risks
-2. **Clear API Boundaries** - Exports define the contract; internal implementations are truly hidden
-3. **Safe Refactoring** - Internal packages can be renamed, restructured, or removed without breaking consumers
-4. **Version Safety** - Modules cannot be split across versions; each module has one version
-5. **Explicit Dependencies** - All module relationships are declared; no classpath surprises
-6. **Minimal Runtime Footprint** - `jlink` can create custom JDK installations with only needed modules
-7. **Framework Compatibility** - The `opens` directive enables reflection-based frameworks while maintaining encapsulation by default
+### Dynamic Perspective (Runtime)
+- Inspected via Module API
+- Can be modified via `addReads`, `addExports`, etc.
+- Enables frameworks and tools
 
-## Building and Running
+Both perspectives are essential:
+- **Static declarations** provide clear contracts and prevent accidents
+- **Dynamic capabilities** enable flexibility for frameworks and advanced scenarios
 
-To build and run the examples:
+---
+
+## Key Takeaways
+
+1. **Modules group packages** - Clear Module > Packages > Classes hierarchy
+2. **Packages are private by default** - Must explicitly export
+3. **Dependencies are explicit** - `requires`, `requires transitive`, `requires static`
+4. **Strong encapsulation is JVM-enforced** - Reflection also controlled
+5. **Module API enables introspection** - Query module structure at runtime
+6. **Dynamic configuration is possible** - Add reads, exports, opens at runtime
+7. **Clear API boundaries** - Public API vs internal implementation
+8. **Frameworks can integrate** - Via `opens` directive and dynamic configuration
+
+---
+
+## Running the Examples
+
+Build and run the examples:
 
 ```bash
-# Build all examples
+# Build
 ./gradlew :blog-post-examples:java:2025-11-08-java9-module-system:build
 
 # Run individual examples
@@ -783,20 +735,5 @@ To build and run the examples:
 ./gradlew :blog-post-examples:java:2025-11-08-java9-module-system:test
 ```
 
-Full source code and examples available at:
+Full source code:
 https://github.com/nsmac/blog-9mac-dev-code/tree/main/blog-post-examples/java/2025-11-08-java9-module-system
-
----
-
-## Key Takeaways
-
-1. **Modules are architectural units** - They group packages, enforce boundaries, and declare dependencies
-2. **Packages are private by default** - Encapsulation is the default, not an afterthought
-3. **Dependencies are explicit** - Module relationships are declared, not inferred from the classpath
-4. **Strong encapsulation is JVM-enforced** - Not just conventions; violations are runtime errors
-5. **Reflection is controlled** - The `opens` directive enables frameworks while maintaining security
-6. **Every module requires java.base** - The foundation module provides core classes
-7. **Transitive dependencies simplify consumption** - Facade modules reduce consumer burden
-8. **Optional dependencies are supported** - `requires static` for compile-time-only needs
-
-The module system represents a fundamental maturation of Java's architecture, enabling building enterprise applications with clear boundaries, explicit dependencies, and strong encapsulation—critical requirements for large-scale, maintainable systems.
