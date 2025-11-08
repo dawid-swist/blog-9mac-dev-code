@@ -1,0 +1,86 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'dev.nmac.blog.examples'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    systemProperty 'user.language', 'en'
+    systemProperty 'user.country', 'US'
+}
+
+application {
+    mainClass = 'dev.nmac.blog.examples.java9.modules.HelloWorld'
+}
+
+// Module System - Introduction
+task runBasicModule(type: JavaExec) {
+    group = 'modules'
+    description = 'Run basic module definition example'
+    mainClass = 'dev.nmac.blog.examples.java9.modules.BasicModuleExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+// Module Dependencies
+task runModuleDependencies(type: JavaExec) {
+    group = 'modules'
+    description = 'Run module dependencies example'
+    mainClass = 'dev.nmac.blog.examples.java9.modules.ModuleDependenciesExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+// Module Exports
+task runModuleExports(type: JavaExec) {
+    group = 'modules'
+    description = 'Run module exports example'
+    mainClass = 'dev.nmac.blog.examples.java9.modules.ModuleExportsExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+// Reflection and Module API
+task runModuleReflection(type: JavaExec) {
+    group = 'modules'
+    description = 'Run module reflection API example'
+    mainClass = 'dev.nmac.blog.examples.java9.modules.ModuleReflectionExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+// Encapsulation
+task runEncapsulation(type: JavaExec) {
+    group = 'modules'
+    description = 'Run module encapsulation example'
+    mainClass = 'dev.nmac.blog.examples.java9.modules.EncapsulationExample'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task runAllExamples {
+    group = 'modules'
+    description = 'Run all module system examples sequentially'
+    dependsOn runBasicModule, runModuleDependencies, runModuleExports, runModuleReflection, runEncapsulation
+    doLast {
+        println ''
+        println '=========================================='
+        println 'All Module System examples completed!'
+        println 'See output above for results.'
+        println '=========================================='
+    }
+}
