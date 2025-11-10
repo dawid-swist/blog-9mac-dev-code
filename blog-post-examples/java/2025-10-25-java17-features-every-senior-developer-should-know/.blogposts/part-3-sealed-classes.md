@@ -250,6 +250,209 @@ public non-sealed class FreeformShape extends Shape {
 public class InvalidShape extends Shape { } // Compile error
 ```
 
+### Design Philosophy: Why Sealed Controls Only Direct Children
+
+You might wonder: why doesn't sealing a class control the entire inheritance chain below it? Why can I seal a parent class but allow a non-sealed child, which then opens the hierarchy to unlimited extensions?
+
+This design decision reflects a fundamental tension between **control** and **flexibility**. Understanding why sealed classes work this way requires looking at a real-world example: the Java Collections Framework.
+
+**The Collections Framework Problem**
+
+Imagine if Java sealed the `Collection` interface like this:
+
+```java
+// Hypothetical sealed Collection (don't do this!)
+public sealed interface Collection<E>
+    permits List, Set, Queue {
+    // ...
+}
+
+public sealed interface List<E> extends Collection<E>
+    permits ArrayList, LinkedList, Vector {
+    // ...
+}
+
+public final class ArrayList<E> implements List<E> {
+    // ...
+}
+```
+
+This looks reasonable: `Collection` controls its direct children (`List`, `Set`, `Queue`), and `List` controls its implementations (`ArrayList`, `LinkedList`). But now consider what this breaks:
+
+```java
+// User code - This will NOT compile!
+public class MyCustomArrayList<E> extends ArrayList<E> {
+    // Add custom caching behavior
+    @Override
+    public E get(int index) {
+        // ... custom logic ...
+    }
+}
+```
+
+**Compilation error:** `MyCustomArrayList` is not in the permits clause of `List`. Your entire ecosystem of third-party libraries breaks overnight—any code that extends `ArrayList`, `LinkedList`, `HashMap`, etc., becomes invalid.
+
+**Why This Matters**
+
+The Java ecosystem thrives on extensibility. Libraries like Guava, Eclipse Collections, and Apache Commons provide custom collection implementations that extend standard classes. If sealed classes controlled the entire hierarchy, you'd need permission from the Collections framework maintainers every time you wanted a custom implementation.
+
+The sealed classes design recognizes this: **each level in the hierarchy independently decides what it permits**. This is the key insight.
+
+#### Pattern 1: Full Control Chain (sealed → sealed → final)
+
+When you want maximal control over the entire hierarchy, use sealed at each level:
+
+```java
+// Top level: sealed, permits intermediate levels
+public sealed abstract class Animal
+    permits Mammal, Bird {
+    public abstract String sound();
+}
+
+// Middle level: sealed, permits leaf implementations
+public sealed abstract class Mammal extends Animal
+    permits Dog, Cat {
+    // ...
+}
+
+// Leaf level: final, no extensions
+public final class Dog extends Mammal {
+    @Override
+    public String sound() { return "woof"; }
+}
+
+// Attempting to extend final fails
+public class ServiceDog extends Dog { } // ❌ Compile error: Dog is final
+```
+
+**What's happening here:**
+- `Animal` controls who can extend it (only `Mammal` and `Bird`)
+- `Mammal` independently controls its children (only `Dog` and `Cat`)
+- `Dog` is final, so the chain ends
+- Each level is a checkpoint that can't be bypassed
+
+This creates a **closed hierarchy** where the compiler knows every possible type at each level.
+
+#### Pattern 2: Breaking the Chain (sealed → non-sealed → open)
+
+When you want to control the top level but allow flexibility below, use non-sealed as an escape hatch:
+
+```java
+// Top level: sealed, permits both sealed and non-sealed children
+public sealed abstract class DatabaseConnection
+    permits ManagedConnection, UserConnection {
+    public abstract void execute(String query);
+}
+
+// Branch 1: sealed - tight control
+public sealed abstract class ManagedConnection extends DatabaseConnection
+    permits PooledConnection, CachedConnection {
+    // Framework-controlled connections
+}
+
+public final class PooledConnection extends ManagedConnection {
+    @Override
+    public void execute(String query) { /* ... */ }
+}
+
+// Branch 2: non-sealed - BREAKS THE SEAL
+public non-sealed abstract class UserConnection extends DatabaseConnection {
+    // Users can extend this freely!
+}
+
+// Now users can create unlimited custom connections
+public class CustomDatabaseConnection extends UserConnection {
+    @Override
+    public void execute(String query) { /* custom logic */ }
+}
+
+public class LoggingConnection extends UserConnection {
+    @Override
+    public void execute(String query) { /* log then delegate */ }
+}
+
+public class MetricsConnection extends UserConnection {
+    @Override
+    public void execute(String query) { /* record metrics */ }
+}
+```
+
+**Why this pattern exists:**
+
+Non-sealed is the middle ground between:
+- `sealed`: Forces all implementations to be in your control (too restrictive for libraries)
+- `open`: No control at all (doesn't solve the problems sealed classes address)
+
+With non-sealed, you get the best of both worlds:
+- The top-level `DatabaseConnection` remains sealed—you control what kinds of connections exist at the highest level
+- `UserConnection` explicitly breaks the seal—users understand they're entering an open-extension zone
+- Users can create unlimited custom implementations without modifying your code or getting compiler errors
+
+This is exactly how the actual Collections Framework would be designed if it were sealed today.
+
+#### Pattern 3: Final Leaf Nodes (sealed → final)
+
+When you want to prevent further extension, use final:
+
+```java
+public sealed abstract class PaymentMethod
+    permits CardPayment, BankTransfer, CryptoCurrency {
+    public abstract void process(double amount);
+}
+
+// Branch 1: final - impossible to extend
+public final class CardPayment extends PaymentMethod {
+    @Override
+    public void process(double amount) {
+        // PCI compliance: no extensions allowed for security
+    }
+}
+
+// Branch 2: sealed - further subdivision possible
+public sealed abstract class BankTransfer extends PaymentMethod
+    permits DomesticTransfer, InternationalTransfer {
+    // ...
+}
+
+// Attempting to extend final fails
+public class EnhancedCardPayment extends CardPayment { }
+// ❌ Compile error: CardPayment is final
+```
+
+**Why use final here:**
+
+Some types are architectural endpoints. `CardPayment` handles PCI-compliant operations—you don't want subclasses that might inadvertently bypass security checks. By making it `final`, you make this intention explicit and prevent dangerous extensions.
+
+#### Why Not Just Seal Everything?
+
+If you sealed every level all the way down, you'd recreate the Collections Framework problem:
+
+```java
+// Too restrictive!
+sealed interface Collection<E> permits List, Set, Queue { }
+sealed interface List<E> extends Collection<E> permits ArrayList, LinkedList { }
+final class ArrayList<E> implements List<E> { }
+
+// Users can't extend ArrayList anymore - ecosystem breaks
+```
+
+Instead, the actual design would be:
+
+```java
+// Practical design
+sealed interface Collection<E> permits List, Set, Queue { }
+non-sealed interface List<E> extends Collection<E> { }
+class ArrayList<E> implements List<E> { }
+
+// Users can still extend ArrayList - ecosystem preserved
+```
+
+By using `non-sealed` strategically, you:
+- **Establish intent** at the top level (what types of collections exist?)
+- **Allow flexibility** where it matters (users can extend implementations)
+- **Prevent accidents** (exhaustive switches over the four main collection types)
+- **Document constraints** (some sealed branches forbid extensions, others allow them)
+
 ### Sealed Interfaces
 
 Interfaces work identically to classes:
