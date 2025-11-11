@@ -73,17 +73,78 @@ Total: 15
 
 ---
 
+## When to Use var
+
+### ✅ Perfect for:
+
+```java
+// Long generic types - clarity without repetition
+var customers = repository.findActiveCustomers();
+
+// Stream operations - complex chains
+var result = employees.stream()
+    .filter(e -> e.salary() > 50000)
+    .map(e -> e.name())
+    .collect(Collectors.toList());
+
+// Clear from context - type is obvious
+var now = LocalDateTime.now();
+var file = new File("data.txt");
+var json = jsonParser.parse(data);
+```
+
+### ❌ Avoid when:
+
+```java
+// Type is NOT obvious to reader
+var result = calculateSomething(x, y);  // What type is result?
+
+// Public API - type should be explicit
+public var getData() { ... }  // Not allowed anyway
+
+// Too cryptic abbreviations
+var x = 10;  // Better: var count = 10;
+var cfg = new Configuration();  // Better: var config = ...
+```
+
+## Common Pitfalls
+
+**Don't initialize with null:**
+```java
+var x = null;  // Compiler error: cannot infer type from null
+```
+
+**Can't use with multiple statements:**
+```java
+var name, age;  // Compile error: must initialize
+
+// Instead use explicit types
+String name;
+int age;
+```
+
+**Type is determined once and fixed:**
+```java
+var number = 42;       // int
+number = "string";     // Compile error! number is int, not String
+```
+
 ## Read the Full Article
 
-Discover more in **[Part 1: Introduction & var Keyword](part-1-introduction-and-var.md)**:
+Discover much more in **[Part 1: Introduction & var Keyword on blog.9mac.dev]([BLOG_LINK_HERE])**:
 - Type inference with anonymous classes and intersection types
 - Advanced use cases with collections and functional interfaces
 - Best practices from production codebases
 - Common pitfalls and how to avoid them
 - 15+ detailed examples with unit tests
+- Performance implications
+- Integration with other Java 17+ features
 
-**All code examples are in the GitHub repository:**
-```
+## GitHub Repository
+
+All code examples are ready to clone and run:
+
+```bash
 git clone https://github.com/dawid-swist/blog-9mac-dev-code.git
 cd blog-post-examples/java/2025-10-25-java17-features-every-senior-developer-should-know
 ../../gradlew test

@@ -59,9 +59,104 @@ Sealed classes give you the middle ground between `final` (no extensions) and op
 
 ---
 
+## The Three Modifiers
+
+### 1. `sealed` - Parent classes/interfaces that restrict extensions
+
+```java
+public sealed abstract class Shape
+    permits Circle, Rectangle, Triangle {
+    abstract double area();
+}
+```
+
+### 2. `final` - Permitted subclasses that can't be extended further
+
+```java
+public final class Circle extends Shape {
+    private double radius;
+
+    @Override
+    double area() { return Math.PI * radius * radius; }
+}
+```
+
+### 3. `non-sealed` - Permitted subclass that can be extended by anyone
+
+```java
+public non-sealed class SpecialShape extends Shape {
+    // Any class can now extend SpecialShape
+    @Override
+    double area() { return 0; }
+}
+```
+
+## Real-World Example: Expression Evaluator
+
+```java
+public sealed interface Expr
+    permits Expr.Num, Expr.Add, Expr.Sub {
+
+    int evaluate();
+
+    record Num(int value) implements Expr {
+        public int evaluate() { return value; }
+    }
+
+    record Add(Expr left, Expr right) implements Expr {
+        public int evaluate() { return left.evaluate() + right.evaluate(); }
+    }
+
+    record Sub(Expr left, Expr right) implements Expr {
+        public int evaluate() { return left.evaluate() - right.evaluate(); }
+    }
+}
+
+// Usage with exhaustive pattern matching:
+public class EvalExample {
+    public static int eval(Expr expr) {
+        return switch (expr) {
+            case Expr.Num num -> num.value();
+            case Expr.Add add -> add.left().evaluate() + add.right().evaluate();
+            case Expr.Sub sub -> sub.left().evaluate() - sub.right().evaluate();
+            // No default needed - compiler verifies all cases!
+        };
+    }
+}
+```
+
+## Common Patterns
+
+### Single Level Hierarchy
+```java
+public sealed abstract class Transport
+    permits Car, Bus, Train {}
+```
+
+### Multi-Level Hierarchy
+```java
+public sealed class Vehicle permits Car, Truck {}
+public final class Car extends Vehicle {}
+public non-sealed class Truck extends Vehicle {} // Others can extend Truck
+```
+
+### Sealed Interfaces
+```java
+public sealed interface Repository<T>
+    permits JdbcRepository, MongoRepository {}
+```
+
+## Benefits
+
+- **Compiler Verification**: Exhaustive switch statements
+- **Intentional Design**: Makes class hierarchies explicit
+- **Refactoring Safety**: Adding implementations forces updates
+- **Performance**: Enables optimizations (narrower type sets)
+- **Documentation**: Code clearly shows permitted extensions
+
 ## Read the Full Article
 
-Discover more in **[Part 3: Sealed Classes](part-3-sealed-classes.md)**:
+Discover much more in **[Part 3: Sealed Classes on blog.9mac.dev]([BLOG_LINK_HERE])**:
 - Design philosophy behind sealed classes
 - Multi-level sealed hierarchies with practical patterns
 - The `non-sealed` modifier in real-world scenarios
@@ -70,8 +165,11 @@ Discover more in **[Part 3: Sealed Classes](part-3-sealed-classes.md)**:
 - Reflection API for runtime introspection
 - Best practices and common pitfalls
 
-**All code examples are in the GitHub repository:**
-```
+## GitHub Repository
+
+All code examples are ready to clone and run:
+
+```bash
 git clone https://github.com/dawid-swist/blog-9mac-dev-code.git
 cd blog-post-examples/java/2025-10-25-java17-features-every-senior-developer-should-know
 ../../gradlew test

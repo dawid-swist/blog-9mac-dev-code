@@ -79,16 +79,72 @@ Records eliminate boilerplate without sacrificing type safety. They're the nativ
 
 ---
 
+## More Advanced Examples
+
+### Generic Records
+
+```java
+public record Pair<T>(T first, T second) {}
+
+public class GenericRecordExample {
+    public static void main(String[] args) {
+        var stringPair = new Pair<>("Alice", "Bob");
+        var numberPair = new Pair<>(42, 100);
+
+        System.out.println(stringPair);     // Pair[first=Alice, second=Bob]
+        System.out.println(numberPair);     // Pair[first=42, second=100]
+    }
+}
+```
+
+### Records with Custom Constructor (Compact Constructor)
+
+```java
+public record Person(String name, int age) {
+    // Compact constructor - implicit parameter assignment
+    public Person {
+        if (age < 0) {
+            throw new IllegalArgumentException("Age cannot be negative");
+        }
+    }
+}
+```
+
+### Records vs POJOs
+
+| Feature | Traditional Class | Record |
+|---------|------------------|--------|
+| Lines of code | 30-50 | 1-2 |
+| Constructor | Manual | Generated |
+| equals/hashCode | Manual | Generated |
+| toString | Manual | Generated |
+| Immutability | Optional | Guaranteed |
+| Inheritance | Flexible | Limited (final) |
+
+## Real-World Use Cases
+
+1. **DTOs (Data Transfer Objects)** - Perfect for API responses
+2. **Value Objects** - Immutable domain model objects
+3. **Configuration Objects** - Simplify config classes
+4. **Test Fixtures** - Clean test data builders
+5. **Tuple-like Types** - Type-safe alternatives to Map
+
 ## Read the Full Article
 
-**[Part 2: Records](part-2-records.md)** includes:
+Discover much more in **[Part 2: Records on blog.9mac.dev]([BLOG_LINK_HERE])**:
 - Generic records with type parameters
 - Custom constructors and validation
 - Sealed record hierarchies
 - 10+ real-world examples
+- Performance comparison with POJOs
+- Integration with streams and collections
+- Serialization considerations
 
-**All code examples are in the GitHub repository:**
-```
+## GitHub Repository
+
+All code examples are ready to clone and run:
+
+```bash
 git clone https://github.com/dawid-swist/blog-9mac-dev-code.git
 cd blog-post-examples/java/2025-10-25-java17-features-every-senior-developer-should-know
 ../../gradlew test
