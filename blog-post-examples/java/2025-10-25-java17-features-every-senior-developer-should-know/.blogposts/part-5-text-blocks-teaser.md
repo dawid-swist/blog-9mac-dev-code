@@ -70,9 +70,145 @@ Text blocks eliminate one of Java's longest-standing pain points: working with e
 
 ---
 
+## Practical Examples
+
+### HTML Templates
+
+```java
+String htmlTemplate = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>User Profile</title>
+    </head>
+    <body>
+        <h1>Welcome, %s</h1>
+        <p>Account created: %s</p>
+    </body>
+    </html>
+    """;
+
+String html = htmlTemplate.formatted(userName, dateCreated);
+```
+
+### SQL Queries
+
+```java
+String selectQuery = """
+    SELECT u.id, u.name, u.email, COUNT(o.id) as order_count
+    FROM users u
+    LEFT JOIN orders o ON u.id = o.user_id
+    WHERE u.active = true
+    GROUP BY u.id, u.name, u.email
+    ORDER BY order_count DESC
+    LIMIT 10
+    """;
+```
+
+### JSON Configuration
+
+```java
+String config = """
+    {
+        "database": {
+            "host": "localhost",
+            "port": 5432,
+            "name": "myapp"
+        },
+        "logging": {
+            "level": "INFO",
+            "format": "json"
+        }
+    }
+    """;
+
+JsonObject json = JsonParser.parse(config);
+```
+
+### XML Document
+
+```java
+String xmlRequest = """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <order>
+        <customer id="12345">
+            <name>John Doe</name>
+            <email>john@example.com</email>
+        </customer>
+        <items>
+            <item>
+                <product>Widget</product>
+                <quantity>5</quantity>
+            </item>
+        </items>
+    </order>
+    """;
+```
+
+## Indentation and Whitespace
+
+Text blocks handle indentation automatically:
+
+```java
+// Recommended: Closing """ on separate line
+String text = """
+    Line 1
+    Line 2
+    Line 3
+    """;
+
+// Also valid: No trailing newline
+String text = """
+    Line 1
+    Line 2
+    Line 3""";
+
+// Escapes still work
+String escaped = """
+    Name: \s
+    Value: \t
+    """;
+```
+
+## String Interpolation (Template Strings - Java 21+)
+
+```java
+String name = "Alice";
+int age = 30;
+
+// Using formatted()
+String message = """
+    Name: %s
+    Age: %d
+    """.formatted(name, age);
+
+// Using String.format()
+String message = String.format("""
+    Name: %s
+    Age: %d
+    """, name, age);
+```
+
+## Processing embedded data
+
+```java
+public class JsonHandler {
+    public static void parseConfig(String jsonFile) {
+        String jsonData = readFile(jsonFile);
+
+        String query = """
+            SELECT * FROM config
+            WHERE data = '%s'
+            """.formatted(jsonData);
+
+        return database.execute(query);
+    }
+}
+```
+
 ## Read the Full Article
 
-Discover more in **[Part 5: Text Blocks](part-5-text-blocks.md)**:
+Discover much more in **[Part 5: Text Blocks on blog.9mac.dev]([BLOG_LINK_HERE])**:
 - Indentation rules and gotchas
 - Escape sequences and special characters
 - Using text blocks with formatting methods
@@ -80,9 +216,13 @@ Discover more in **[Part 5: Text Blocks](part-5-text-blocks.md)**:
 - 15+ practical examples with JSON, SQL, HTML, XML
 - Performance considerations
 - Migration from traditional string concatenation
+- Integration with templating libraries
 
-**All code examples are in the GitHub repository:**
-```
+## GitHub Repository
+
+All code examples are ready to clone and run:
+
+```bash
 git clone https://github.com/dawid-swist/blog-9mac-dev-code.git
 cd blog-post-examples/java/2025-10-25-java17-features-every-senior-developer-should-know
 ../../gradlew test
