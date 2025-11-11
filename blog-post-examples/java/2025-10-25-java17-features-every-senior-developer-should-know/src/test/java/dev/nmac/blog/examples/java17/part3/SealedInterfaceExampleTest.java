@@ -18,7 +18,7 @@ class SealedInterfaceExampleTest {
         assertEquals(150.00, payment.amount());
         assertEquals("John Doe", payment.cardHolder());
         assertEquals("MERCHANT_001", payment.merchantId());
-        assertTrue(payment.description().contains("$150.00"));
+        assertTrue(payment.description().matches(".*\\$150[.,]00.*")); // Supports both . and , decimal separators
     }
 
     @Test
@@ -92,7 +92,7 @@ class SealedInterfaceExampleTest {
         var description = payment.description();
 
         assertTrue(description.contains("Bank Transfer"));
-        assertTrue(description.contains("$1000.00"));
+        assertTrue(description.matches(".*\\$1000[.,]00.*")); // Supports both . and , decimal separators
         assertTrue(description.contains("INV-2024-001"));
     }
 }

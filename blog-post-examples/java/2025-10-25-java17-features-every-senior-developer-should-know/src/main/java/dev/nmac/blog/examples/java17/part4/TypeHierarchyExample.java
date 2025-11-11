@@ -45,13 +45,13 @@ public class TypeHierarchyExample {
     public static String describeTraditional(Shape shape) {
         if (shape instanceof Circle) {
             Circle c = (Circle) shape;
-            return String.format("Circle with radius %.2f", c.radius());
+            return String.format(java.util.Locale.US, "Circle with radius %.2f", c.radius());
         } else if (shape instanceof Rectangle) {
             Rectangle r = (Rectangle) shape;
-            return String.format("Rectangle %.2f x %.2f", r.width(), r.height());
+            return String.format(java.util.Locale.US, "Rectangle %.2f x %.2f", r.width(), r.height());
         } else if (shape instanceof Triangle) {
             Triangle t = (Triangle) shape;
-            return String.format("Triangle with base %.2f and height %.2f", t.base(), t.height());
+            return String.format(java.util.Locale.US, "Triangle with base %.2f and height %.2f", t.base(), t.height());
         } else {
             return "Unknown shape";
         }
@@ -63,11 +63,11 @@ public class TypeHierarchyExample {
      */
     public static String describeModern(Shape shape) {
         if (shape instanceof Circle c) {
-            return String.format("Circle with radius %.2f", c.radius());
+            return String.format(java.util.Locale.US, "Circle with radius %.2f", c.radius());
         } else if (shape instanceof Rectangle r) {
-            return String.format("Rectangle %.2f x %.2f", r.width(), r.height());
+            return String.format(java.util.Locale.US, "Rectangle %.2f x %.2f", r.width(), r.height());
         } else if (shape instanceof Triangle t) {
-            return String.format("Triangle with base %.2f and height %.2f", t.base(), t.height());
+            return String.format(java.util.Locale.US, "Triangle with base %.2f and height %.2f", t.base(), t.height());
         } else {
             return "Unknown shape";
         }

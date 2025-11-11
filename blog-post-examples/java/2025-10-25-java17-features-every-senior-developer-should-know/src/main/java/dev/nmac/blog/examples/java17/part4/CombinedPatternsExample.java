@@ -21,24 +21,24 @@ public class CombinedPatternsExample {
     // Pattern matching with guard conditions
     public static String processPayment(PaymentMethod method, double amount) {
         if (method instanceof CreditCard cc && cc.limit() >= amount) {
-            return String.format("Charging $%.2f to credit card ending in %s",
+            return String.format(java.util.Locale.US, "Charging $%.2f to credit card ending in %s",
                 amount, cc.number().substring(cc.number().length() - 4));
         } else if (method instanceof CreditCard cc) {
-            return String.format("Credit card declined - limit $%.2f exceeded by $%.2f",
+            return String.format(java.util.Locale.US, "Credit card declined - limit $%.2f exceeded by $%.2f",
                 cc.limit(), amount - cc.limit());
         } else if (method instanceof DebitCard dc) {
-            return String.format("Processing debit card payment of $%.2f", amount);
+            return String.format(java.util.Locale.US, "Processing debit card payment of $%.2f", amount);
         } else if (method instanceof Cash cash && cash.amount() >= amount) {
             double change = cash.amount() - amount;
-            return String.format("Cash payment of $%.2f received, change: $%.2f",
+            return String.format(java.util.Locale.US, "Cash payment of $%.2f received, change: $%.2f",
                 cash.amount(), change);
         } else if (method instanceof Cash cash) {
-            return String.format("Insufficient cash - need $%.2f more",
+            return String.format(java.util.Locale.US, "Insufficient cash - need $%.2f more",
                 amount - cash.amount());
         } else if (method instanceof DigitalWallet wallet && wallet.balance() >= amount) {
-            return String.format("Paid $%.2f via %s", amount, wallet.provider());
+            return String.format(java.util.Locale.US, "Paid $%.2f via %s", amount, wallet.provider());
         } else if (method instanceof DigitalWallet wallet) {
-            return String.format("%s wallet has insufficient funds", wallet.provider());
+            return String.format(java.util.Locale.US, "%s wallet has insufficient funds", wallet.provider());
         }
 
         return "Unknown payment method";

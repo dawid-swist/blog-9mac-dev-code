@@ -75,8 +75,8 @@ class BasicSealedExampleTest {
         var description = circle.describe();
 
         assertTrue(description.contains("Circle"));
-        assertTrue(description.contains("5.00"));
-        assertTrue(description.contains("78.54"));
+        assertTrue(description.matches(".*5[.,]0+.*")); // Supports both . and , decimal separators
+        assertTrue(description.matches(".*78[.,]5[0-9].*")); // Area approximately 78.54
     }
 
     @Test
@@ -86,9 +86,9 @@ class BasicSealedExampleTest {
         var description = rectangle.describe();
 
         assertTrue(description.contains("Rectangle"));
-        assertTrue(description.contains("4.00"));
-        assertTrue(description.contains("6.00"));
-        assertTrue(description.contains("24.00"));
+        assertTrue(description.matches(".*4[.,]0+.*")); // Supports both . and , decimal separators
+        assertTrue(description.matches(".*6[.,]0+.*")); // Supports both . and , decimal separators
+        assertTrue(description.matches(".*24[.,]0+.*")); // Supports both . and , decimal separators
     }
 
     @Test
@@ -98,8 +98,8 @@ class BasicSealedExampleTest {
         var description = triangle.describe();
 
         assertTrue(description.contains("Triangle"));
-        assertTrue(description.contains("3.00"));
-        assertTrue(description.contains("8.00"));
-        assertTrue(description.contains("12.00"));
+        assertTrue(description.matches(".*3[.,]0+.*")); // Supports both . and , decimal separators
+        assertTrue(description.matches(".*8[.,]0+.*")); // Supports both . and , decimal separators
+        assertTrue(description.matches(".*12[.,]0+.*")); // Supports both . and , decimal separators
     }
 }

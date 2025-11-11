@@ -125,7 +125,7 @@ Sealed classes have specific properties:
 - **Exhaustiveness checking**: The compiler knows all possible subtypes for switch statements
 - **Same package/module requirement**: Sealed class and permitted subclasses must be in the same package (or module)
 - **Sealed interfaces**: Interfaces can be sealed identically to classes
-- **Records work naturally**: Records are implicitly `final`, making them perfect sealed type implementations
+- **Records and sealed types**: Records are implicitly `final`, suitable for sealed type implementations
 
 ---
 
@@ -459,7 +459,7 @@ Interfaces work identically to classes:
 
 ```java
 public sealed interface Transport
-    permits Car, Bicycle, Train {
+    permits Car, Bicycle {
     void move();
 }
 
@@ -701,7 +701,7 @@ Permitted subclasses: Circle Rectangle Triangle
 
 ### Example 2: Sealed Interfaces with Records
 
-Sealed interfaces combined with records create elegant, immutable domain models with exhaustive type checking.
+Sealed interfaces restrict implementations to explicit types with exhaustive checking.
 
 ```java
 // Sealed interface
@@ -915,7 +915,7 @@ Payment is sealed: true
 Permitted implementations: CreditCard DebitCard Cash BankTransfer
 ```
 
-**Key Insight**: Sealed interfaces work perfectly with records because records are implicitly `final`. This combination creates immutable, type-safe domain models where the compiler knows every possible implementation. It's Java's answer to algebraic data types from functional programming languages.
+**Key Insight**: Records are implicitly `final`, making them suitable for sealed interface implementations. The compiler knows all possible implementations.
 
 ---
 
@@ -1148,7 +1148,7 @@ Car is final: true
 
 ### Example 4: Exhaustive Switch with Sealed Types
 
-One of the most powerful benefits of sealed classes is exhaustive switch expressions—the compiler verifies you've handled all possible subtypes without needing a `default` case.
+Sealed types enable exhaustive switch expressions. The compiler verifies all possible subtypes are handled without a `default` case.
 
 ```java
 // Sealed JSON value hierarchy
@@ -1376,7 +1376,7 @@ boolean: false
 null value
 ```
 
-**Key Insight**: Exhaustive switch with sealed types is incredibly powerful. The compiler knows all possible `JSONValue` implementations, so it can verify your switch covers every case. If you add a new permitted subclass (like `JSONDate`), every switch becomes a compilation error until you handle the new type—preventing bugs at compile-time, not runtime.
+**Key Insight**: The compiler enforces exhaustiveness in switches. Adding a new type without updating all switches causes compilation errors.
 
 ---
 
@@ -1659,345 +1659,6 @@ Mammal permits:
 
 ---
 
-### Example 6: Domain Modeling with Result Type
-
-Sealed classes shine in domain modeling, particularly for representing operations that can succeed or fail. Here's a practical `Result<T>` type for error handling without exceptions.
-
-```java
-// Sealed Result type
-public sealed interface Result<T>
-    permits Success, Failure {
-
-    // Factory methods
-    static <T> Result<T> success(T value) {
-        return new Success<>(value);
-    }
-
-    static <T> Result<T> failure(String error) {
-        return new Failure<>(error);
-    }
-
-    static <T> Result<T> failure(String error, Throwable cause) {
-        return new Failure<>(error, cause);
-    }
-
-    // Query methods
-    boolean isSuccess();
-    boolean isFailure();
-
-    // Value extraction (safe)
-    T getValue();
-    String getError();
-
-    // Functional operations
-    <U> Result<U> map(java.util.function.Function<T, U> mapper);
-    <U> Result<U> flatMap(java.util.function.Function<T, Result<U>> mapper);
-    Result<T> orElse(java.util.function.Supplier<Result<T>> alternative);
-}
-
-public record Success<T>(T value) implements Result<T> {
-    public Success {
-        if (value == null) {
-            throw new IllegalArgumentException("Success value cannot be null");
-        }
-    }
-
-    @Override
-    public boolean isSuccess() { return true; }
-
-    @Override
-    public boolean isFailure() { return false; }
-
-    @Override
-    public T getValue() { return value; }
-
-    @Override
-    public String getError() {
-        throw new UnsupportedOperationException("Success has no error");
-    }
-
-    @Override
-    public <U> Result<U> map(java.util.function.Function<T, U> mapper) {
-        try {
-            return new Success<>(mapper.apply(value));
-        } catch (Exception e) {
-            return new Failure<>(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public <U> Result<U> flatMap(java.util.function.Function<T, Result<U>> mapper) {
-        try {
-            return mapper.apply(value);
-        } catch (Exception e) {
-            return new Failure<>(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public Result<T> orElse(java.util.function.Supplier<Result<T>> alternative) {
-        return this;
-    }
-}
-
-public record Failure<T>(String error, Throwable cause) implements Result<T> {
-    public Failure(String error) {
-        this(error, null);
-    }
-
-    @Override
-    public boolean isSuccess() { return false; }
-
-    @Override
-    public boolean isFailure() { return true; }
-
-    @Override
-    public T getValue() {
-        throw new UnsupportedOperationException("Failure has no value: " + error);
-    }
-
-    @Override
-    public String getError() { return error; }
-
-    @Override
-    public <U> Result<U> map(java.util.function.Function<T, U> mapper) {
-        return new Failure<>(error, cause);
-    }
-
-    @Override
-    public <U> Result<U> flatMap(java.util.function.Function<T, Result<U>> mapper) {
-        return new Failure<>(error, cause);
-    }
-
-    @Override
-    public Result<T> orElse(java.util.function.Supplier<Result<T>> alternative) {
-        return alternative.get();
-    }
-}
-
-public class ResultTypeExample {
-    // Simulate database operations
-    public static Result<String> findUserById(int id) {
-        if (id <= 0) {
-            return Result.failure("Invalid user ID: " + id);
-        }
-        if (id > 1000) {
-            return Result.failure("User not found: " + id);
-        }
-        return Result.success("User" + id);
-    }
-
-    public static Result<Integer> calculateDiscount(String userName) {
-        if (userName.startsWith("Premium")) {
-            return Result.success(20);
-        } else if (userName.startsWith("Regular")) {
-            return Result.success(10);
-        } else {
-            return Result.failure("Unknown user category: " + userName);
-        }
-    }
-
-    public static void main(String[] args) {
-        System.out.println("=== Basic Result Operations ===");
-
-        // Success case
-        var successResult = findUserById(42);
-        System.out.println("Is success? " + successResult.isSuccess());
-        System.out.println("Value: " + successResult.getValue());
-
-        // Failure case
-        var failureResult = findUserById(-1);
-        System.out.println("\nIs failure? " + failureResult.isFailure());
-        System.out.println("Error: " + failureResult.getError());
-
-        // Chaining with map
-        System.out.println("\n=== Chaining with map() ===");
-        var mapped = findUserById(100)
-            .map(name -> name.toUpperCase())
-            .map(name -> "Hello, " + name);
-
-        if (mapped.isSuccess()) {
-            System.out.println("Result: " + mapped.getValue());
-        }
-
-        // Chaining with flatMap
-        System.out.println("\n=== Chaining with flatMap() ===");
-        var chained = findUserById(500)
-            .flatMap(userName -> calculateDiscount(userName))
-            .map(discount -> "Discount: " + discount + "%");
-
-        if (chained.isSuccess()) {
-            System.out.println(chained.getValue());
-        }
-
-        // Error propagation
-        System.out.println("\n=== Error Propagation ===");
-        var errorChain = findUserById(2000) // Fails here
-            .flatMap(userName -> calculateDiscount(userName))
-            .map(discount -> "Discount: " + discount + "%");
-
-        if (errorChain.isFailure()) {
-            System.out.println("Error: " + errorChain.getError());
-        }
-
-        // Fallback with orElse
-        System.out.println("\n=== Fallback with orElse() ===");
-        var withFallback = findUserById(2000)
-            .orElse(() -> Result.success("GuestUser"));
-
-        System.out.println("Final value: " + withFallback.getValue());
-
-        // Exhaustive switch on Result
-        System.out.println("\n=== Exhaustive Switch ===");
-        var result = findUserById(123);
-        String message = switch (result) {
-            case Success<String> s -> "Found user: " + s.value();
-            case Failure<String> f -> "Error: " + f.error();
-        };
-        System.out.println(message);
-    }
-}
-```
-
-```java
-// Unit tests
-
-@Test
-@DisplayName("Should create Success with valid value")
-void shouldCreateSuccessWithValidValue() {
-    var result = Result.success("test");
-
-    assertTrue(result.isSuccess());
-    assertFalse(result.isFailure());
-    assertEquals("test", result.getValue());
-}
-
-@Test
-@DisplayName("Should create Failure with error message")
-void shouldCreateFailureWithErrorMessage() {
-    var result = Result.<String>failure("Something went wrong");
-
-    assertTrue(result.isFailure());
-    assertFalse(result.isSuccess());
-    assertEquals("Something went wrong", result.getError());
-}
-
-@Test
-@DisplayName("Should throw exception when accessing value on Failure")
-void shouldThrowExceptionWhenAccessingValueOnFailure() {
-    var result = Result.<String>failure("Error");
-
-    assertThrows(UnsupportedOperationException.class, result::getValue);
-}
-
-@Test
-@DisplayName("Should throw exception when accessing error on Success")
-void shouldThrowExceptionWhenAccessingErrorOnSuccess() {
-    var result = Result.success("test");
-
-    assertThrows(UnsupportedOperationException.class, result::getError);
-}
-
-@Test
-@DisplayName("Should map Success value")
-void shouldMapSuccessValue() {
-    var result = Result.success(5)
-        .map(x -> x * 2)
-        .map(x -> "Value: " + x);
-
-    assertTrue(result.isSuccess());
-    assertEquals("Value: 10", result.getValue());
-}
-
-@Test
-@DisplayName("Should propagate Failure through map")
-void shouldPropagateFailureThroughMap() {
-    var result = Result.<Integer>failure("Initial error")
-        .map(x -> x * 2)
-        .map(x -> "Value: " + x);
-
-    assertTrue(result.isFailure());
-    assertEquals("Initial error", result.getError());
-}
-
-@Test
-@DisplayName("Should flatMap Success results")
-void shouldFlatMapSuccessResults() {
-    var result = Result.success(5)
-        .flatMap(x -> Result.success(x * 2))
-        .flatMap(x -> Result.success("Result: " + x));
-
-    assertTrue(result.isSuccess());
-    assertEquals("Result: 10", result.getValue());
-}
-
-@Test
-@DisplayName("Should use orElse for Failure recovery")
-void shouldUseOrElseForFailureRecovery() {
-    var result = Result.<String>failure("Error")
-        .orElse(() -> Result.success("fallback"));
-
-    assertTrue(result.isSuccess());
-    assertEquals("fallback", result.getValue());
-}
-
-@Test
-@DisplayName("Should not use orElse for Success")
-void shouldNotUseOrElseForSuccess() {
-    var result = Result.success("original")
-        .orElse(() -> Result.success("fallback"));
-
-    assertEquals("original", result.getValue());
-}
-
-@Test
-@DisplayName("Should find user by valid ID")
-void shouldFindUserByValidID() {
-    var result = ResultTypeExample.findUserById(42);
-
-    assertTrue(result.isSuccess());
-    assertEquals("User42", result.getValue());
-}
-
-@Test
-@DisplayName("Should fail for invalid user ID")
-void shouldFailForInvalidUserID() {
-    var result = ResultTypeExample.findUserById(-1);
-
-    assertTrue(result.isFailure());
-    assertTrue(result.getError().contains("Invalid user ID"));
-}
-```
-
-**Output:**
-```
-=== Basic Result Operations ===
-Is success? true
-Value: User42
-
-Is failure? true
-Error: Invalid user ID: -1
-
-=== Chaining with map() ===
-Result: Hello, USER100
-
-=== Chaining with flatMap() ===
-Discount: 10%
-
-=== Error Propagation ===
-Error: User not found: 2000
-
-=== Fallback with orElse() ===
-Final value: GuestUser
-
-=== Exhaustive Switch ===
-Found user: User123
-```
-
-**Key Insight**: The sealed `Result<T>` type demonstrates domain modeling at its finest. With only two possible implementations (`Success` and `Failure`), the compiler can verify exhaustive handling in switch expressions. This pattern eliminates null checks, provides type-safe error handling, and enables functional composition with `map` and `flatMap`—all without throwing exceptions. It's a powerful alternative to try-catch for expected error conditions.
-
----
-
 ## Best Practices
 
 ### When to Use Sealed Classes
@@ -2019,7 +1680,7 @@ Found user: User123
 
 **1. Algebraic Data Types (ADTs)**
 
-Combine sealed classes with records for elegant ADTs:
+Sealed classes with records support algebraic data types (ADTs):
 
 ```java
 sealed interface Expression permits Constant, Addition, Multiplication {}
@@ -2065,7 +1726,7 @@ return switch (vehicle) {
 };
 ```
 
-**Sealed + Enums** - Enums are implicitly final, perfect for sealed types
+**Sealed + Enums** - Enums are implicitly final, suitable for sealed types
 
 ```java
 sealed interface TrafficLight permits Red, Yellow, Green {}
@@ -2202,9 +1863,9 @@ In this article, we explored **Sealed Classes** (JEP 409), one of Java 17's most
 **Key takeaways:**
 
 ✅ Sealed classes give you fine-grained control over inheritance hierarchies
-✅ Perfect for closed domain models with a fixed set of variants
+✅ For closed domain models with fixed variants
 ✅ Enable exhaustive pattern matching with compiler verification
-✅ Combine beautifully with records for immutable, type-safe domain models
+✅ Work with records for type-safe domain models
 ✅ Use `final` for leaf classes, `sealed` for intermediate levels, `non-sealed` to break the seal
 
 **When to use sealed classes:**
@@ -2221,7 +1882,7 @@ In this article, we explored **Sealed Classes** (JEP 409), one of Java 17's most
 
 ### What's Next?
 
-In **Part 4**, we'll explore **Pattern Matching** and **Switch Expressions**—two features that work beautifully with sealed classes. You'll learn:
+In **Part 4**, we'll explore **Pattern Matching** and **Switch Expressions**—two features that work with sealed classes. You'll learn:
 
 - Pattern matching for `instanceof` (JEP 394)
 - Modern switch expressions with arrow syntax (JEP 361)
