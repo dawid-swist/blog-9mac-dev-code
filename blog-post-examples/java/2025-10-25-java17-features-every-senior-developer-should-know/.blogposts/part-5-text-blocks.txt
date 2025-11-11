@@ -1,16 +1,16 @@
-# Java 17 Features Every Senior Developer Should Know - Part 5: Text Blocks
+Java 17 Features Every Senior Developer Should Know - Part 5: Text Blocks
 
-**Part 5 of 6** - Essential Java 17+ features for senior developers upgrading from Java 8, 11, or 13.
+Part 5 of 6 - Essential Java 17+ features for senior developers upgrading from Java 8, 11, or 13.
 
-**This is a teaser article.** A quick introduction to the feature, the problem it solves, and simple examples. Read the full article for deep dive with indentation rules, escape sequences, and 15+ practical examples with JSON, SQL, HTML, and XML.
+**This is a teaser post.** Quick intro to the feature, the problem it solves, and simple examples. Read the full article for indentation rules, escape sequences, and 15+ practical examples with JSON, SQL, HTML, and XML.
 
 ---
 
-## Why This Matters
+**Why This Matters**
 
 If you've ever embedded JSON, SQL, HTML, or XML in Java, you know the pain:
 
-```java
+```
 // Before Java 15: String concatenation hell
 String json = "{\n" +
               "  \"name\": \"Alice\",\n" +
@@ -25,11 +25,11 @@ Text Blocks (Java 15) solve this: **write multi-line strings the way you'd write
 
 ---
 
-## What are Text Blocks?
+**What are Text Blocks?**
 
 A **text block** is a multi-line string literal delimited by triple-double-quotes (`"""`):
 
-```java
+```
 // Java 15+: Text blocks - clean and readable
 String json = """
     {
@@ -44,9 +44,9 @@ No escape sequences. No concatenation. No ceremony. The compiler automatically h
 
 ---
 
-## Before and After
+**Before and After**
 
-```java
+```
 // Before: Noisy and error-prone
 String sql = "SELECT u.name, u.email\n" +
              "FROM users u\n" +
@@ -64,30 +64,27 @@ String sql = """
 
 ---
 
-## Key Insight
+**Key Insight**
 
 Text blocks eliminate one of Java's longest-standing pain points: working with embedded languages (JSON, SQL, HTML, XML). They make strings readable by letting you write data the way you'd write it outside of Java code.
 
 ---
 
-## Read the Full Article
+**Read the Full Article**
 
-Discover more in **[Part 5: Text Blocks](part-5-text-blocks.md)**:
-- Indentation rules and gotchas
-- Escape sequences and special characters
-- Using text blocks with formatting methods
-- Text blocks in APIs (parsing JSON, executing SQL)
-- 15+ practical examples with JSON, SQL, HTML, XML
-- Performance considerations
-- Migration from traditional string concatenation
+Part 5: Text Blocks includes:
+• Indentation rules and gotchas
+• Escape sequences and special characters
+• Using text blocks with formatting methods
+• Text blocks in APIs (parsing JSON, executing SQL)
+• 15+ practical examples with JSON, SQL, HTML, XML
+• Performance considerations
+• Migration from traditional string concatenation
 
-**All code examples are in the GitHub repository:**
-```
-git clone https://github.com/dawid-swist/blog-9mac-dev-code.git
-cd blog-post-examples/java/2025-10-25-java17-features-every-senior-developer-should-know
-../../gradlew test
-```
+📖 Read the full article: [BLOG_LINK_HERE]
 
 ---
 
 **Next in the series:** Part 6 - Syntax Cheat Sheet (complete reference)
+
+#Java #Java17 #SoftwareDevelopment #Programming #TextBlocks
