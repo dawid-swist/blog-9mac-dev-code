@@ -2,7 +2,7 @@
 
 **Part 2 of 6** - Essential Java 17+ features for senior developers upgrading from Java 8, 11, or 13.
 
-**This is a teaser article.** Quick intro and simple example. Read the full article for 10+ real-world examples, custom constructors, and validation.
+Records solve the data class problem: automatically generating constructors, equals(), hashCode(), and toString(). This article covers immutable data carriers, validation patterns, and real-world applications from DTOs to domain models.
 
 ---
 

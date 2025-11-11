@@ -2,7 +2,7 @@
 
 **Part 5 of 6** - Essential Java 17+ features for senior developers upgrading from Java 8, 11, or 13.
 
-**This is a teaser article.** A quick introduction to the feature, the problem it solves, and simple examples. Read the full article for deep dive with indentation rules, escape sequences, and 15+ practical examples with JSON, SQL, HTML, and XML.
+Text blocks solve the embedded language problem: write JSON, SQL, HTML, and XML directly without escape sequences or concatenation. This article covers indentation rules, string interpolation, and practical examples for real-world APIs and configurations.
 
 ---
 
