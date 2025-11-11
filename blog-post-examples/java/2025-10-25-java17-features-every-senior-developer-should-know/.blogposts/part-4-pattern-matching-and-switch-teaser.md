@@ -1,8 +1,16 @@
 # Java 17 Features Every Senior Developer Should Know - Part 4: Pattern Matching & Switch Expressions
 
-**Part 4 of 6** - Essential Java 17+ features for senior developers upgrading from Java 8, 11, or 13.
+This is **Part 4** of a comprehensive series on essential Java 17+ features that every senior developer must understand when working with modern Java. Whether you're migrating from Java 8, 11, or 13, or you're mentoring junior developers, this series covers the language features that will define your production code quality and team productivity for the next decade.
 
-Pattern matching replaces mechanical instanceof-cast chains with declarative patterns, while switch expressions eliminate fall-through bugs. This article shows how modern pattern matching works with guards, records, and sealed types for safer, more readable code.
+**This series covers:**
+- **Part 1**: Local variable type inference with `var` keyword
+- **Part 2**: Immutable data carriers with Records
+- **Part 3**: Controlled inheritance hierarchies with Sealed Classes
+- **Part 4**: Pattern matching and modern switch expressions
+- **Part 5**: Multi-line string literals with Text Blocks
+- **Part 6**: Quick reference syntax cheat sheet
+
+Each part is designed to be read independently, but together they provide a complete picture of modern Java development.
 
 ---
 
@@ -32,180 +40,131 @@ switch (month) {
     case "March":  // Forgot break? Silent bug.
         days = 31;
         break;
-    default: throw new IllegalArgumentException();
+    default:
+        throw new IllegalArgumentException();
 }
 ```
 
-Pattern matching and switch expressions solve both problems.
+Pattern matching (Java 16) and switch expressions (Java 14) solve both problems: **combine type checks with casting atomically, and make switches expressions instead of statements.**
 
 ---
 
 ## What is Pattern Matching?
 
-**Pattern matching** combines type checking and variable binding in a single operation:
+**Pattern matching** combines type checking and variable binding in a single operation. Instead of checking `instanceof`, casting, and extracting—do it all at once:
 
 ```java
 // Modern way with pattern matching (Java 16+)
 if (obj instanceof String s) {
-    return "String of length " + s.length();  // 's' is already String
+    return "String of length " + s.length();  // 's' is already the String
 }
 ```
 
-No redundancy. No extra casts. The compiler automatically checks the type, casts, and binds the variable `s`.
+The compiler automatically:
+1. Checks the type
+2. Casts to that type
+3. Binds the variable `s`
 
----
+All in one expression. No redundancy. No extra casts.
+
+## Basic Pattern Matching Example
+
+```java
+public String describe(Object obj) {
+    // Pattern matching with instanceof
+    if (obj instanceof String s) {
+        return "String: " + s;
+    } else if (obj instanceof Integer i) {
+        return "Integer: " + i;
+    } else if (obj instanceof Double d) {
+        return "Double: " + d;
+    } else {
+        return "Unknown type";
+    }
+}
+```
+
+Compared to pre-Java 16, this eliminates:
+- Manual casts
+- Type repetition
+- Variable declaration boilerplate
 
 ## Switch Expressions
 
 Before Java 14, switch was a statement (didn't return values). Modern switch is an expression:
 
 ```java
+// Old way: switch statement
+int days;
+switch (month) {
+    case "January": days = 31; break;
+    case "February": days = 28; break;
+    default: throw new IllegalArgumentException();
+}
+
 // Modern way: switch expression (Java 14+)
 var days = switch (month) {
-    case "January", "March", "May" -> 31;
+    case "January" -> 31;
     case "February" -> 28;
-    case "April", "June" -> 30;
+    case "March", "April" -> 31; // Multiple cases with arrow
     default -> throw new IllegalArgumentException();
 };
 ```
 
-Arrow syntax (`->`) eliminates fall-through. No `break` statements needed.
+Key improvements:
+- ✅ Returns a value directly
+- ✅ Arrow syntax (`->`) no fall-through
+- ✅ Multiple cases in one line
+- ✅ No need for break statements
+- ✅ Exhaustiveness checking (with sealed types)
 
----
+## Pattern Matching in Switch
+
+Combine both features with sealed classes:
+
+```java
+public sealed interface Animal permits Dog, Cat, Bird {}
+public record Dog(String name) implements Animal {}
+public record Cat(String name) implements Animal {}
+public record Bird(String name) implements Animal {}
+
+public String sound(Animal animal) {
+    return switch (animal) {
+        case Dog dog -> dog.name() + " says: Woof!";
+        case Cat cat -> cat.name() + " says: Meow!";
+        case Bird bird -> bird.name() + " says: Tweet!";
+        // Compiler knows all cases are covered!
+    };
+}
+```
+
+No `default` needed—the compiler verifies exhaustiveness because `Animal` is sealed.
 
 ## Key Insight
 
-Pattern matching represents a paradigm shift from imperative ("how do I check and cast?") to declarative ("what pattern should match?"). Combined with sealed classes, it enables exhaustive checking at compile-time.
+Pattern matching represents a paradigm shift from imperative ("how do I check and cast?") to declarative ("what pattern should match?"). Combined with sealed classes, it enables exhaustive checking at compile-time. This reduces bugs and makes code intention crystal clear.
 
 ---
 
-## More Pattern Matching Examples
+## Want to Learn More?
 
-### Type Patterns with Guards
+This is just a preview of pattern matching and switch expressions. **[Read the full Part 4 article](part-4-pattern-matching-and-switch.md)** where you'll discover:
 
-```java
-public String analyze(Object obj) {
-    return switch (obj) {
-        case String s when s.length() > 10 -> "Long string: " + s;
-        case String s -> "Short string: " + s;
-        case Integer i when i > 0 -> "Positive: " + i;
-        case Integer i -> "Non-positive: " + i;
-        default -> "Unknown type";
-    };
-}
-```
-
-### Deconstruction Patterns (Records)
-
-```java
-public record Point(int x, int y) {}
-public record Circle(Point center, int radius) {}
-
-public String describeCircle(Object obj) {
-    return switch (obj) {
-        case Circle(var center, var r) when r > 100
-            -> "Large circle at " + center + ", radius: " + r;
-        case Circle(Point(var x, var y), var r)
-            -> "Circle at (" + x + "," + y + "), radius: " + r;
-        default -> "Not a circle";
-    };
-}
-```
-
-### Combining with if-else
-
-```java
-public void processPayment(Object obj) {
-    if (obj instanceof CreditCard card) {
-        chargeCard(card.cardNumber(), card.amount());
-    } else if (obj instanceof BankTransfer transfer) {
-        transferFunds(transfer.accountNumber(), transfer.amount());
-    } else if (obj instanceof CryptoCurrency crypto) {
-        processCrypto(crypto.wallet(), crypto.amount());
-    } else {
-        throw new IllegalArgumentException("Unknown payment type");
-    }
-}
-```
-
-## Switch Expressions vs Statements
-
-| Feature | Statement | Expression |
-|---------|-----------|-----------|
-| Returns value | No | Yes |
-| Syntax | `case:` with `break` | Arrow `->` |
-| Fall-through | Possible (bug-prone) | Not possible |
-| Default | Optional | Required |
-| Readability | Lower | Higher |
-
-```java
-// OLD: Switch statement
-int days;
-switch (month) {
-    case "January":
-    case "March":
-    case "May":
-        days = 31;
-        break;
-    default:
-        throw new Exception("Unknown month");
-}
-
-// NEW: Switch expression
-int days = switch (month) {
-    case "January", "March", "May" -> 31;
-    case "April", "June", "September", "November" -> 30;
-    case "February" -> 28;
-    default -> throw new IllegalArgumentException("Unknown month");
-};
-```
-
-## Practical Example: JSON Parser
-
-```java
-public Object parseJsonValue(String json) {
-    return switch (json.charAt(0)) {
-        case '{' -> parseObject(json);
-        case '[' -> parseArray(json);
-        case '"' -> parseString(json);
-        case 't', 'f' -> parseBoolean(json);
-        case 'n' -> null;
-        case '-', '0','1','2','3','4','5','6','7','8','9'
-            -> parseNumber(json);
-        default -> throw new IllegalArgumentException("Invalid JSON: " + json);
-    };
-}
-```
-
-## Common Patterns
-
-1. **Type Checking** - Replace instanceof chains
-2. **Sealed Hierarchy Exhaustiveness** - Compiler ensures all cases
-3. **Guard Conditions** - Filter patterns with `when`
-4. **Deconstruction** - Extract values from records
-5. **Multi-case Labels** - Comma-separated cases
-
-## Read the Full Article
-
-Discover much more in **[Part 4: Pattern Matching & Switch Expressions on blog.9mac.dev]([BLOG_LINK_HERE])**:
+- Deep history: why Java needed pattern matching
 - Pattern matching in other languages (Swift, Scala, Kotlin, TypeScript)
 - Guards and complex pattern conditions
 - Type patterns, type tests, and deconstruction patterns
 - Switch expressions vs statements: when to use each
 - Integration with sealed classes for exhaustive checking
 - 10+ practical examples from real-world scenarios
-- Performance implications
+- Performance considerations and best practices
+- Common pitfalls and how to avoid them
 
-## GitHub Repository
+The full article includes comprehensive examples, performance analysis, and production-ready patterns.
 
-All code examples are ready to clone and run:
-
+**All code examples are runnable in the GitHub repository:**
 ```bash
 git clone https://github.com/dawid-swist/blog-9mac-dev-code.git
 cd blog-post-examples/java/2025-10-25-java17-features-every-senior-developer-should-know
 ../../gradlew test
 ```
-
----
-
-**Next in the series:** Part 5 - Text Blocks (multi-line string literals)
