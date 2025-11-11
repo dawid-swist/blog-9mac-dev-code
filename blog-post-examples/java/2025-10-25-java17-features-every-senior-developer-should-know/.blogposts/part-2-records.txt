@@ -1,93 +1,96 @@
-🚀 Java 17 Features Every Senior Developer Should Know - Part 2: Records
+Java 17 Features Every Senior Developer Should Know - Part 2: Records
 
 Part 2 of 6 - Essential Java 17+ features for senior developers upgrading from Java 8, 11, or 13.
 
-⚠️ This is a teaser article. Quick introduction to records, the problem they solve, and a simple example. Read the full article for 10+ real-world examples, custom constructors, and validation.
+**This is a teaser post.** Quick intro and simple example. Read the full article for 10+ real-world examples, custom constructors, and validation.
 
-━━━━━━━━━━━━━━━━━━━━━━
+---
 
-💡 Why This Matters
+**Why This Matters**
 
-For 20+ years, creating a simple data class meant writing the same ceremony over and over: private final fields, constructor, getters, equals(), hashCode(), and toString(). The most common data structure in Java required 30-50 lines of boilerplate.
+For 20+ years, creating a simple data class meant writing the same ceremony over and over: private final fields, constructor, getters, `equals()`, `hashCode()`, and `toString()`. The most common data structure in Java required 30-50 lines of boilerplate.
 
-Other languages solved this decades ago. Scala case classes (2003), Kotlin data classes (2016), even C# record types (2020)—all understood that data carriers should be one line, not thirty.
+Other languages solved this decades ago. Scala case classes (2003), Kotlin data classes (2016), even C# record types (2020)—all understood that **data carriers should be one line, not thirty.**
 
-Java 17 finally brought a native solution: Records.
+Java 17 finally brought a native solution: **Records.**
 
-━━━━━━━━━━━━━━━━━━━━━━
+---
 
-🔍 What are Records?
+**What are Records?**
 
-A record is a special class designed to be an immutable carrier for data. When you declare a record, the compiler automatically generates constructors, accessors, equals(), hashCode(), and toString().
+A **record** is a special class designed to be an immutable carrier for data. When you declare a record, the compiler automatically generates constructors, accessors, `equals()`, `hashCode()`, and `toString()`.
 
-Before Java 16:
-    public final class Point {
-        private final int x;
-        private final int y;
+**Before Java 16:**
+```
+public final class Point {
+    private final int x;
+    private final int y;
 
-        public Point(int x, int y) { this.x = x; this.y = y; }
-        public int x() { return x; }
-        public int y() { return y; }
+    public Point(int x, int y) { this.x = x; this.y = y; }
+    public int x() { return x; }
+    public int y() { return y; }
 
-        @Override public boolean equals(Object o) { /* 10 lines */ }
-        @Override public int hashCode() { return Objects.hash(x, y); }
-        @Override public String toString() { return "Point[x=" + x + ", y=" + y + "]"; }
-    }
+    @Override public boolean equals(Object o) { /* 10 lines */ }
+    @Override public int hashCode() { return Objects.hash(x, y); }
+    @Override public String toString() { return "Point[x=" + x + ", y=" + y + "]"; }
+}
+```
 
-After Java 16:
-    public record Point(int x, int y) {}
+**After Java 16:**
+```
+public record Point(int x, int y) {}
+```
 
 That's it. The compiler generates everything.
 
-Key characteristics:
-• Immutable - Fields are private final, no setters
-• No inheritance - Records are implicitly final
-• Perfect for - DTOs, value objects, domain entities
+---
 
-━━━━━━━━━━━━━━━━━━━━━━
+**Simple Example**
 
-💻 Simple Example
+```
+public record Book(String title, String author, int year) {}
 
-    public record Book(String title, String author, int year) {}
+public class RecordExample {
+    public static void main(String[] args) {
+        var book = new Book("Clean Code", "Robert Martin", 2008);
 
-    public class RecordExample {
-        public static void main(String[] args) {
-            var book = new Book("Clean Code", "Robert Martin", 2008);
+        System.out.println(book);
+        System.out.println("Title: " + book.title());
 
-            System.out.println(book);
-            System.out.println("Title: " + book.title());
-
-            var book2 = new Book("Clean Code", "Robert Martin", 2008);
-            System.out.println("Equal: " + book.equals(book2));  // true
-        }
+        var book2 = new Book("Clean Code", "Robert Martin", 2008);
+        System.out.println("Equal: " + book.equals(book2));  // true
     }
+}
+```
 
-Output:
-    Book[title=Clean Code, author=Robert Martin, year=2008]
-    Title: Clean Code
-    Equal: true
+---
 
-━━━━━━━━━━━━━━━━━━━━━━
+**Key Characteristics**
 
-✨ Key Insight
+• **Immutable** - Fields are `private final`, no setters
+• **No inheritance** - Records are implicitly final
+• **Perfect for** - DTOs, value objects, domain entities
 
-Records eliminate boilerplate without sacrificing type safety. They're the native Java solution to what Project Lombok tried to solve. Your code expresses intent: immutable data carrier.
+---
 
-━━━━━━━━━━━━━━━━━━━━━━
+**Key Insight**
 
-📖 Read the Full Article
+Records eliminate boilerplate without sacrificing type safety. They're the native Java solution to what Project Lombok tried to solve. Your code expresses intent: "immutable data carrier."
 
-Discover more in Part 2: Records:
-✅ Generic records with type parameters
-✅ Custom constructors and validation
-✅ Sealed record hierarchies
-✅ 10+ real-world examples
-✅ Best practices and performance tips
+---
 
-👉 Full article: [BLOG_LINK_HERE]
+**Read the Full Article**
 
-━━━━━━━━━━━━━━━━━━━━━━
+Part 2: Records includes:
+• Generic records with type parameters
+• Custom constructors and validation
+• Sealed record hierarchies
+• 10+ real-world examples
 
-Ready to eliminate boilerplate code? Explore Records today 👇
+📖 Read the full article: [BLOG_LINK_HERE]
+
+---
+
+**Next in the series:** Part 3 - Sealed Classes (controlled inheritance hierarchies)
 
 #Java #Java17 #SoftwareDevelopment #Programming #Records
