@@ -38,6 +38,7 @@ task runBasicModule(type: JavaExec) {
     description = 'Run basic module definition example'
     mainClass = 'dev.nmac.blog.examples.java9.modules.BasicModuleExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 // Module Dependencies
@@ -46,6 +47,7 @@ task runModuleDependencies(type: JavaExec) {
     description = 'Run module dependencies example'
     mainClass = 'dev.nmac.blog.examples.java9.modules.ModuleDependenciesExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 // Module Exports
@@ -54,6 +56,7 @@ task runModuleExports(type: JavaExec) {
     description = 'Run module exports example'
     mainClass = 'dev.nmac.blog.examples.java9.modules.ModuleExportsExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 // Reflection and Module API
@@ -62,6 +65,7 @@ task runModuleReflection(type: JavaExec) {
     description = 'Run module reflection API example'
     mainClass = 'dev.nmac.blog.examples.java9.modules.ModuleReflectionExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 // Encapsulation
@@ -70,6 +74,7 @@ task runEncapsulation(type: JavaExec) {
     description = 'Run module encapsulation example'
     mainClass = 'dev.nmac.blog.examples.java9.modules.EncapsulationExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runAllExamples {
