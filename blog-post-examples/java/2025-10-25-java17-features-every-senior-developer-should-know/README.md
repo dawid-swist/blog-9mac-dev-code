@@ -131,41 +131,19 @@ Run all Part 2 examples:
 ./gradlew :blog-post-examples:java:2025-10-25-java17-features-every-senior-developer-should-know:test --tests "*VarCollectionsExample*"
 ```
 
-## Project Configuration
-
-- **Java Version:** 21 (compatible with Java 17+)
-- **Build Tool:** Gradle 9.0.0
-- **Test Framework:** JUnit 5 (Jupiter)
-- **Group ID:** dev.nmac.blog.examples
-- **Version:** 1.0.0
-
 ## Series Contents
 
-### Part 1: Introduction and Local Variable Type Inference
-Covers the `var` keyword, its benefits, and limitations in modern Java.
+### Part 1: Local Variable Type Inference
+The `var` keyword - type inference with collections, limitations, and best practices.
 
-**Topics:**
-- Type inference with collections
-- Anonymous classes and var
-- Intersection types
-- Common pitfalls and best practices
-
-### Part 2: Records - Modern Data Carriers
-Explores records as a modern replacement for traditional data classes.
-
-**Topics:**
-- Basic record declaration and usage
-- Generic records with type parameters
-- Custom methods and constructors
-- Implementing interfaces with records
-- Nested records
-- Performance advantages over traditional classes
+### Part 2: Records
+Modern data carriers - declaration, generics, methods, interfaces, and performance.
 
 ### Part 3: Sealed Classes
-Understanding controlled inheritance and sealed class hierarchies.
+Controlled inheritance and sealed class hierarchies.
 
 ### Part 4: Pattern Matching and Switch Expressions
-Modern pattern matching capabilities and enhanced switch.
+Modern pattern matching capabilities and enhanced switch statements.
 
 ### Part 5: Text Blocks
 Multi-line string literals for cleaner code.
@@ -173,46 +151,7 @@ Multi-line string literals for cleaner code.
 ### Part 6: Syntax Cheat Sheet
 Quick reference guide for all covered features.
 
-## Learning Approach
-
-Each example includes:
-- **Well-commented source code** explaining concepts step-by-step
-- **Unit tests** with `@DisplayName` annotations demonstrating real-world usage
-- **Program output** showing execution results
-- **Key insights** explaining the benefits and trade-offs
-
-## Blog Posts
-
-For comprehensive explanations and deeper insights, visit:
-- **blog.9mac.dev** - Full article series with detailed walkthroughs
-
 ## Requirements
 
 - Java 17 or higher (tested with Java 21)
-- Gradle 9.0.0 (included via wrapper)
-
-## Quick Start
-
-```bash
-# Clone and navigate to repository
-cd blog-9mac-dev-code
-
-# Run all Part 1 examples
-./gradlew :blog-post-examples:java:2025-10-25-java17-features-every-senior-developer-should-know:runAllPart1Examples
-
-# Run all Part 2 examples
-./gradlew :blog-post-examples:java:2025-10-25-java17-features-every-senior-developer-should-know:runAllPart2Examples
-
-# Run all tests
-./gradlew :blog-post-examples:java:2025-10-25-java17-features-every-senior-developer-should-know:test
-```
-
-## Code Quality
-
-All examples follow:
-- Java coding conventions
-- Gradle best practices
-- Clear naming and documentation
-- Comprehensive unit test coverage
-
-Enjoy exploring modern Java features!
+- Gradle (included via wrapper)

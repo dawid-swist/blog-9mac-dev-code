@@ -1,19 +1,11 @@
-# dev-tools
+# Development Tools Examples
 
-This directory contains code examples and related resources for the dev-tools section.
+This directory contains code examples, scripts, and configurations for various development tools.
 
 ## Contents
 
-(You can add a list of files and descriptions specific to this section here)
-
-## How to Use
-
-(You can add instructions on how to run the examples in this section here)
+Examples and utilities related to development tools, Linux utilities, Docker, and other development infrastructure.
 
 ## Related Blog Posts
 
-(You can add links to related blog posts on 9mac.dev here, if any)
-
-## Sub-directories (if any)
-
-(Brief description of sub-directories here, if any)
+Visit [blog.9mac.dev](https://blog.9mac.dev) for detailed articles and tutorials.
