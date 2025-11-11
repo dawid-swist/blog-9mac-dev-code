@@ -2,7 +2,7 @@
 
 **Part 6 of 6** - Final installment of the Java 17+ features series.
 
-**This is a teaser article.** Quick intro to the syntax cheat sheet. Read the full article for complete reference with syntax, migration checklist, and troubleshooting guide.
+A practical reference combining all six features: quick syntax examples, when to use each feature, and a complete migration checklist for upgrading from Java 8 to modern Java. Includes real-world examples showing features working together.
 
 ---
 

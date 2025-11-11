@@ -2,7 +2,7 @@
 
 **Part 4 of 6** - Essential Java 17+ features for senior developers upgrading from Java 8, 11, or 13.
 
-**This is a teaser article.** Quick intro to the features, problems they solve, and examples. Read the full article for pattern matching in other languages, guards, and 10+ scenarios.
+Pattern matching replaces mechanical instanceof-cast chains with declarative patterns, while switch expressions eliminate fall-through bugs. This article shows how modern pattern matching works with guards, records, and sealed types for safer, more readable code.
 
 ---
 

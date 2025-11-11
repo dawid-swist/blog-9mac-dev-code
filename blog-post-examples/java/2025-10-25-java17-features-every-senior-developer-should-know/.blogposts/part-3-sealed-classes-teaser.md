@@ -2,7 +2,7 @@
 
 **Part 3 of 6** - Essential Java 17+ features for senior developers upgrading from Java 8, 11, or 13.
 
-**This is a teaser article.** A quick introduction to the feature, the problem it solves, and a simple example. Read the full article for deep dive with multi-level hierarchies, non-sealed modifiers, and 5+ comprehensive real-world examples.
+Sealed classes give you the middle ground between `final` (too restrictive) and open (too permissive), enabling compiler-verified exhaustive checking. This article explores controlled inheritance, the three modifiers, and patterns for building maintainable type hierarchies.
 
 ---
 

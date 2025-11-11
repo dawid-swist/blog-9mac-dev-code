@@ -2,7 +2,7 @@
 
 **Part 1 of 6** - Essential Java 17+ features for senior developers upgrading from Java 8, 11, or 13.
 
-**This is a teaser article.** A quick introduction to the feature, the problem it solves, and a simple example. Read the full article for deep dive with 15+ detailed examples, best practices, and unit tests.
+The `var` keyword eliminates redundant type declarations, letting the compiler infer types from context. This article explores type inference rules, best practices, and shows why it's essential for modern Java development with the Stream API.
 
 ---
 
