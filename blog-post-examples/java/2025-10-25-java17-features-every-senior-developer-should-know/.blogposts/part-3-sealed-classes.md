@@ -125,7 +125,7 @@ Sealed classes have specific properties:
 - **Exhaustiveness checking**: The compiler knows all possible subtypes for switch statements
 - **Same package/module requirement**: Sealed class and permitted subclasses must be in the same package (or module)
 - **Sealed interfaces**: Interfaces can be sealed identically to classes
-- **Records work naturally**: Records are implicitly `final`, making them perfect sealed type implementations
+- **Records and sealed types**: Records are implicitly `final`, suitable for sealed type implementations
 
 ---
 
@@ -250,13 +250,216 @@ public non-sealed class FreeformShape extends Shape {
 public class InvalidShape extends Shape { } // Compile error
 ```
 
+### Design Philosophy: Why Sealed Controls Only Direct Children
+
+You might wonder: why doesn't sealing a class control the entire inheritance chain below it? Why can I seal a parent class but allow a non-sealed child, which then opens the hierarchy to unlimited extensions?
+
+This design decision reflects a fundamental tension between **control** and **flexibility**. Understanding why sealed classes work this way requires looking at a real-world example: the Java Collections Framework.
+
+**The Collections Framework Problem**
+
+Imagine if Java sealed the `Collection` interface like this:
+
+```java
+// Hypothetical sealed Collection (don't do this!)
+public sealed interface Collection<E>
+    permits List, Set, Queue {
+    // ...
+}
+
+public sealed interface List<E> extends Collection<E>
+    permits ArrayList, LinkedList, Vector {
+    // ...
+}
+
+public final class ArrayList<E> implements List<E> {
+    // ...
+}
+```
+
+This looks reasonable: `Collection` controls its direct children (`List`, `Set`, `Queue`), and `List` controls its implementations (`ArrayList`, `LinkedList`). But now consider what this breaks:
+
+```java
+// User code - This will NOT compile!
+public class MyCustomArrayList<E> extends ArrayList<E> {
+    // Add custom caching behavior
+    @Override
+    public E get(int index) {
+        // ... custom logic ...
+    }
+}
+```
+
+**Compilation error:** `MyCustomArrayList` is not in the permits clause of `List`. Your entire ecosystem of third-party libraries breaks overnight—any code that extends `ArrayList`, `LinkedList`, `HashMap`, etc., becomes invalid.
+
+**Why This Matters**
+
+The Java ecosystem thrives on extensibility. Libraries like Guava, Eclipse Collections, and Apache Commons provide custom collection implementations that extend standard classes. If sealed classes controlled the entire hierarchy, you'd need permission from the Collections framework maintainers every time you wanted a custom implementation.
+
+The sealed classes design recognizes this: **each level in the hierarchy independently decides what it permits**. This is the key insight.
+
+#### Pattern 1: Full Control Chain (sealed → sealed → final)
+
+When you want maximal control over the entire hierarchy, use sealed at each level:
+
+```java
+// Top level: sealed, permits intermediate levels
+public sealed abstract class Animal
+    permits Mammal, Bird {
+    public abstract String sound();
+}
+
+// Middle level: sealed, permits leaf implementations
+public sealed abstract class Mammal extends Animal
+    permits Dog, Cat {
+    // ...
+}
+
+// Leaf level: final, no extensions
+public final class Dog extends Mammal {
+    @Override
+    public String sound() { return "woof"; }
+}
+
+// Attempting to extend final fails
+public class ServiceDog extends Dog { } // ❌ Compile error: Dog is final
+```
+
+**What's happening here:**
+- `Animal` controls who can extend it (only `Mammal` and `Bird`)
+- `Mammal` independently controls its children (only `Dog` and `Cat`)
+- `Dog` is final, so the chain ends
+- Each level is a checkpoint that can't be bypassed
+
+This creates a **closed hierarchy** where the compiler knows every possible type at each level.
+
+#### Pattern 2: Breaking the Chain (sealed → non-sealed → open)
+
+When you want to control the top level but allow flexibility below, use non-sealed as an escape hatch:
+
+```java
+// Top level: sealed, permits both sealed and non-sealed children
+public sealed abstract class DatabaseConnection
+    permits ManagedConnection, UserConnection {
+    public abstract void execute(String query);
+}
+
+// Branch 1: sealed - tight control
+public sealed abstract class ManagedConnection extends DatabaseConnection
+    permits PooledConnection, CachedConnection {
+    // Framework-controlled connections
+}
+
+public final class PooledConnection extends ManagedConnection {
+    @Override
+    public void execute(String query) { /* ... */ }
+}
+
+// Branch 2: non-sealed - BREAKS THE SEAL
+public non-sealed abstract class UserConnection extends DatabaseConnection {
+    // Users can extend this freely!
+}
+
+// Now users can create unlimited custom connections
+public class CustomDatabaseConnection extends UserConnection {
+    @Override
+    public void execute(String query) { /* custom logic */ }
+}
+
+public class LoggingConnection extends UserConnection {
+    @Override
+    public void execute(String query) { /* log then delegate */ }
+}
+
+public class MetricsConnection extends UserConnection {
+    @Override
+    public void execute(String query) { /* record metrics */ }
+}
+```
+
+**Why this pattern exists:**
+
+Non-sealed is the middle ground between:
+- `sealed`: Forces all implementations to be in your control (too restrictive for libraries)
+- `open`: No control at all (doesn't solve the problems sealed classes address)
+
+With non-sealed, you get the best of both worlds:
+- The top-level `DatabaseConnection` remains sealed—you control what kinds of connections exist at the highest level
+- `UserConnection` explicitly breaks the seal—users understand they're entering an open-extension zone
+- Users can create unlimited custom implementations without modifying your code or getting compiler errors
+
+This is exactly how the actual Collections Framework would be designed if it were sealed today.
+
+#### Pattern 3: Final Leaf Nodes (sealed → final)
+
+When you want to prevent further extension, use final:
+
+```java
+public sealed abstract class PaymentMethod
+    permits CardPayment, BankTransfer, CryptoCurrency {
+    public abstract void process(double amount);
+}
+
+// Branch 1: final - impossible to extend
+public final class CardPayment extends PaymentMethod {
+    @Override
+    public void process(double amount) {
+        // PCI compliance: no extensions allowed for security
+    }
+}
+
+// Branch 2: sealed - further subdivision possible
+public sealed abstract class BankTransfer extends PaymentMethod
+    permits DomesticTransfer, InternationalTransfer {
+    // ...
+}
+
+// Attempting to extend final fails
+public class EnhancedCardPayment extends CardPayment { }
+// ❌ Compile error: CardPayment is final
+```
+
+**Why use final here:**
+
+Some types are architectural endpoints. `CardPayment` handles PCI-compliant operations—you don't want subclasses that might inadvertently bypass security checks. By making it `final`, you make this intention explicit and prevent dangerous extensions.
+
+#### Why Not Just Seal Everything?
+
+If you sealed every level all the way down, you'd recreate the Collections Framework problem:
+
+```java
+// Too restrictive!
+sealed interface Collection<E> permits List, Set, Queue { }
+sealed interface List<E> extends Collection<E> permits ArrayList, LinkedList { }
+final class ArrayList<E> implements List<E> { }
+
+// Users can't extend ArrayList anymore - ecosystem breaks
+```
+
+Instead, the actual design would be:
+
+```java
+// Practical design
+sealed interface Collection<E> permits List, Set, Queue { }
+non-sealed interface List<E> extends Collection<E> { }
+class ArrayList<E> implements List<E> { }
+
+// Users can still extend ArrayList - ecosystem preserved
+```
+
+By using `non-sealed` strategically, you:
+- **Establish intent** at the top level (what types of collections exist?)
+- **Allow flexibility** where it matters (users can extend implementations)
+- **Prevent accidents** (exhaustive switches over the four main collection types)
+- **Document constraints** (some sealed branches forbid extensions, others allow them)
+
 ### Sealed Interfaces
 
 Interfaces work identically to classes:
 
 ```java
 public sealed interface Transport
-    permits Car, Bicycle, Train {
+    permits Car, Bicycle {
     void move();
 }
 
@@ -498,7 +701,7 @@ Permitted subclasses: Circle Rectangle Triangle
 
 ### Example 2: Sealed Interfaces with Records
 
-Sealed interfaces combined with records create elegant, immutable domain models with exhaustive type checking.
+Sealed interfaces restrict implementations to explicit types with exhaustive checking.
 
 ```java
 // Sealed interface
@@ -712,7 +915,7 @@ Payment is sealed: true
 Permitted implementations: CreditCard DebitCard Cash BankTransfer
 ```
 
-**Key Insight**: Sealed interfaces work perfectly with records because records are implicitly `final`. This combination creates immutable, type-safe domain models where the compiler knows every possible implementation. It's Java's answer to algebraic data types from functional programming languages.
+**Key Insight**: Records are implicitly `final`, making them suitable for sealed interface implementations. The compiler knows all possible implementations.
 
 ---
 
@@ -945,7 +1148,7 @@ Car is final: true
 
 ### Example 4: Exhaustive Switch with Sealed Types
 
-One of the most powerful benefits of sealed classes is exhaustive switch expressions—the compiler verifies you've handled all possible subtypes without needing a `default` case.
+Sealed types enable exhaustive switch expressions. The compiler verifies all possible subtypes are handled without a `default` case.
 
 ```java
 // Sealed JSON value hierarchy
@@ -1173,7 +1376,7 @@ boolean: false
 null value
 ```
 
-**Key Insight**: Exhaustive switch with sealed types is incredibly powerful. The compiler knows all possible `JSONValue` implementations, so it can verify your switch covers every case. If you add a new permitted subclass (like `JSONDate`), every switch becomes a compilation error until you handle the new type—preventing bugs at compile-time, not runtime.
+**Key Insight**: The compiler enforces exhaustiveness in switches. Adding a new type without updating all switches causes compilation errors.
 
 ---
 
@@ -1456,345 +1659,6 @@ Mammal permits:
 
 ---
 
-### Example 6: Domain Modeling with Result Type
-
-Sealed classes shine in domain modeling, particularly for representing operations that can succeed or fail. Here's a practical `Result<T>` type for error handling without exceptions.
-
-```java
-// Sealed Result type
-public sealed interface Result<T>
-    permits Success, Failure {
-
-    // Factory methods
-    static <T> Result<T> success(T value) {
-        return new Success<>(value);
-    }
-
-    static <T> Result<T> failure(String error) {
-        return new Failure<>(error);
-    }
-
-    static <T> Result<T> failure(String error, Throwable cause) {
-        return new Failure<>(error, cause);
-    }
-
-    // Query methods
-    boolean isSuccess();
-    boolean isFailure();
-
-    // Value extraction (safe)
-    T getValue();
-    String getError();
-
-    // Functional operations
-    <U> Result<U> map(java.util.function.Function<T, U> mapper);
-    <U> Result<U> flatMap(java.util.function.Function<T, Result<U>> mapper);
-    Result<T> orElse(java.util.function.Supplier<Result<T>> alternative);
-}
-
-public record Success<T>(T value) implements Result<T> {
-    public Success {
-        if (value == null) {
-            throw new IllegalArgumentException("Success value cannot be null");
-        }
-    }
-
-    @Override
-    public boolean isSuccess() { return true; }
-
-    @Override
-    public boolean isFailure() { return false; }
-
-    @Override
-    public T getValue() { return value; }
-
-    @Override
-    public String getError() {
-        throw new UnsupportedOperationException("Success has no error");
-    }
-
-    @Override
-    public <U> Result<U> map(java.util.function.Function<T, U> mapper) {
-        try {
-            return new Success<>(mapper.apply(value));
-        } catch (Exception e) {
-            return new Failure<>(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public <U> Result<U> flatMap(java.util.function.Function<T, Result<U>> mapper) {
-        try {
-            return mapper.apply(value);
-        } catch (Exception e) {
-            return new Failure<>(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public Result<T> orElse(java.util.function.Supplier<Result<T>> alternative) {
-        return this;
-    }
-}
-
-public record Failure<T>(String error, Throwable cause) implements Result<T> {
-    public Failure(String error) {
-        this(error, null);
-    }
-
-    @Override
-    public boolean isSuccess() { return false; }
-
-    @Override
-    public boolean isFailure() { return true; }
-
-    @Override
-    public T getValue() {
-        throw new UnsupportedOperationException("Failure has no value: " + error);
-    }
-
-    @Override
-    public String getError() { return error; }
-
-    @Override
-    public <U> Result<U> map(java.util.function.Function<T, U> mapper) {
-        return new Failure<>(error, cause);
-    }
-
-    @Override
-    public <U> Result<U> flatMap(java.util.function.Function<T, Result<U>> mapper) {
-        return new Failure<>(error, cause);
-    }
-
-    @Override
-    public Result<T> orElse(java.util.function.Supplier<Result<T>> alternative) {
-        return alternative.get();
-    }
-}
-
-public class ResultTypeExample {
-    // Simulate database operations
-    public static Result<String> findUserById(int id) {
-        if (id <= 0) {
-            return Result.failure("Invalid user ID: " + id);
-        }
-        if (id > 1000) {
-            return Result.failure("User not found: " + id);
-        }
-        return Result.success("User" + id);
-    }
-
-    public static Result<Integer> calculateDiscount(String userName) {
-        if (userName.startsWith("Premium")) {
-            return Result.success(20);
-        } else if (userName.startsWith("Regular")) {
-            return Result.success(10);
-        } else {
-            return Result.failure("Unknown user category: " + userName);
-        }
-    }
-
-    public static void main(String[] args) {
-        System.out.println("=== Basic Result Operations ===");
-
-        // Success case
-        var successResult = findUserById(42);
-        System.out.println("Is success? " + successResult.isSuccess());
-        System.out.println("Value: " + successResult.getValue());
-
-        // Failure case
-        var failureResult = findUserById(-1);
-        System.out.println("\nIs failure? " + failureResult.isFailure());
-        System.out.println("Error: " + failureResult.getError());
-
-        // Chaining with map
-        System.out.println("\n=== Chaining with map() ===");
-        var mapped = findUserById(100)
-            .map(name -> name.toUpperCase())
-            .map(name -> "Hello, " + name);
-
-        if (mapped.isSuccess()) {
-            System.out.println("Result: " + mapped.getValue());
-        }
-
-        // Chaining with flatMap
-        System.out.println("\n=== Chaining with flatMap() ===");
-        var chained = findUserById(500)
-            .flatMap(userName -> calculateDiscount(userName))
-            .map(discount -> "Discount: " + discount + "%");
-
-        if (chained.isSuccess()) {
-            System.out.println(chained.getValue());
-        }
-
-        // Error propagation
-        System.out.println("\n=== Error Propagation ===");
-        var errorChain = findUserById(2000) // Fails here
-            .flatMap(userName -> calculateDiscount(userName))
-            .map(discount -> "Discount: " + discount + "%");
-
-        if (errorChain.isFailure()) {
-            System.out.println("Error: " + errorChain.getError());
-        }
-
-        // Fallback with orElse
-        System.out.println("\n=== Fallback with orElse() ===");
-        var withFallback = findUserById(2000)
-            .orElse(() -> Result.success("GuestUser"));
-
-        System.out.println("Final value: " + withFallback.getValue());
-
-        // Exhaustive switch on Result
-        System.out.println("\n=== Exhaustive Switch ===");
-        var result = findUserById(123);
-        String message = switch (result) {
-            case Success<String> s -> "Found user: " + s.value();
-            case Failure<String> f -> "Error: " + f.error();
-        };
-        System.out.println(message);
-    }
-}
-```
-
-```java
-// Unit tests
-
-@Test
-@DisplayName("Should create Success with valid value")
-void shouldCreateSuccessWithValidValue() {
-    var result = Result.success("test");
-
-    assertTrue(result.isSuccess());
-    assertFalse(result.isFailure());
-    assertEquals("test", result.getValue());
-}
-
-@Test
-@DisplayName("Should create Failure with error message")
-void shouldCreateFailureWithErrorMessage() {
-    var result = Result.<String>failure("Something went wrong");
-
-    assertTrue(result.isFailure());
-    assertFalse(result.isSuccess());
-    assertEquals("Something went wrong", result.getError());
-}
-
-@Test
-@DisplayName("Should throw exception when accessing value on Failure")
-void shouldThrowExceptionWhenAccessingValueOnFailure() {
-    var result = Result.<String>failure("Error");
-
-    assertThrows(UnsupportedOperationException.class, result::getValue);
-}
-
-@Test
-@DisplayName("Should throw exception when accessing error on Success")
-void shouldThrowExceptionWhenAccessingErrorOnSuccess() {
-    var result = Result.success("test");
-
-    assertThrows(UnsupportedOperationException.class, result::getError);
-}
-
-@Test
-@DisplayName("Should map Success value")
-void shouldMapSuccessValue() {
-    var result = Result.success(5)
-        .map(x -> x * 2)
-        .map(x -> "Value: " + x);
-
-    assertTrue(result.isSuccess());
-    assertEquals("Value: 10", result.getValue());
-}
-
-@Test
-@DisplayName("Should propagate Failure through map")
-void shouldPropagateFailureThroughMap() {
-    var result = Result.<Integer>failure("Initial error")
-        .map(x -> x * 2)
-        .map(x -> "Value: " + x);
-
-    assertTrue(result.isFailure());
-    assertEquals("Initial error", result.getError());
-}
-
-@Test
-@DisplayName("Should flatMap Success results")
-void shouldFlatMapSuccessResults() {
-    var result = Result.success(5)
-        .flatMap(x -> Result.success(x * 2))
-        .flatMap(x -> Result.success("Result: " + x));
-
-    assertTrue(result.isSuccess());
-    assertEquals("Result: 10", result.getValue());
-}
-
-@Test
-@DisplayName("Should use orElse for Failure recovery")
-void shouldUseOrElseForFailureRecovery() {
-    var result = Result.<String>failure("Error")
-        .orElse(() -> Result.success("fallback"));
-
-    assertTrue(result.isSuccess());
-    assertEquals("fallback", result.getValue());
-}
-
-@Test
-@DisplayName("Should not use orElse for Success")
-void shouldNotUseOrElseForSuccess() {
-    var result = Result.success("original")
-        .orElse(() -> Result.success("fallback"));
-
-    assertEquals("original", result.getValue());
-}
-
-@Test
-@DisplayName("Should find user by valid ID")
-void shouldFindUserByValidID() {
-    var result = ResultTypeExample.findUserById(42);
-
-    assertTrue(result.isSuccess());
-    assertEquals("User42", result.getValue());
-}
-
-@Test
-@DisplayName("Should fail for invalid user ID")
-void shouldFailForInvalidUserID() {
-    var result = ResultTypeExample.findUserById(-1);
-
-    assertTrue(result.isFailure());
-    assertTrue(result.getError().contains("Invalid user ID"));
-}
-```
-
-**Output:**
-```
-=== Basic Result Operations ===
-Is success? true
-Value: User42
-
-Is failure? true
-Error: Invalid user ID: -1
-
-=== Chaining with map() ===
-Result: Hello, USER100
-
-=== Chaining with flatMap() ===
-Discount: 10%
-
-=== Error Propagation ===
-Error: User not found: 2000
-
-=== Fallback with orElse() ===
-Final value: GuestUser
-
-=== Exhaustive Switch ===
-Found user: User123
-```
-
-**Key Insight**: The sealed `Result<T>` type demonstrates domain modeling at its finest. With only two possible implementations (`Success` and `Failure`), the compiler can verify exhaustive handling in switch expressions. This pattern eliminates null checks, provides type-safe error handling, and enables functional composition with `map` and `flatMap`—all without throwing exceptions. It's a powerful alternative to try-catch for expected error conditions.
-
----
-
 ## Best Practices
 
 ### When to Use Sealed Classes
@@ -1816,7 +1680,7 @@ Found user: User123
 
 **1. Algebraic Data Types (ADTs)**
 
-Combine sealed classes with records for elegant ADTs:
+Sealed classes with records support algebraic data types (ADTs):
 
 ```java
 sealed interface Expression permits Constant, Addition, Multiplication {}
@@ -1862,7 +1726,7 @@ return switch (vehicle) {
 };
 ```
 
-**Sealed + Enums** - Enums are implicitly final, perfect for sealed types
+**Sealed + Enums** - Enums are implicitly final, suitable for sealed types
 
 ```java
 sealed interface TrafficLight permits Red, Yellow, Green {}
@@ -1999,9 +1863,9 @@ In this article, we explored **Sealed Classes** (JEP 409), one of Java 17's most
 **Key takeaways:**
 
 ✅ Sealed classes give you fine-grained control over inheritance hierarchies
-✅ Perfect for closed domain models with a fixed set of variants
+✅ For closed domain models with fixed variants
 ✅ Enable exhaustive pattern matching with compiler verification
-✅ Combine beautifully with records for immutable, type-safe domain models
+✅ Work with records for type-safe domain models
 ✅ Use `final` for leaf classes, `sealed` for intermediate levels, `non-sealed` to break the seal
 
 **When to use sealed classes:**
@@ -2018,7 +1882,7 @@ In this article, we explored **Sealed Classes** (JEP 409), one of Java 17's most
 
 ### What's Next?
 
-In **Part 4**, we'll explore **Pattern Matching** and **Switch Expressions**—two features that work beautifully with sealed classes. You'll learn:
+In **Part 4**, we'll explore **Pattern Matching** and **Switch Expressions**—two features that work with sealed classes. You'll learn:
 
 - Pattern matching for `instanceof` (JEP 394)
 - Modern switch expressions with arrow syntax (JEP 361)

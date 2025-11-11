@@ -46,8 +46,16 @@ sealed interface JSONValue
 
 /**
  * JSON object type containing key-value pairs.
+ * Uses immutable Map to prevent accidental modification of record data.
  */
 record JSONObject(Map<String, JSONValue> values) implements JSONValue {
+
+    /**
+     * Compact constructor ensures values are immutable.
+     */
+    public JSONObject {
+        values = Map.copyOf(values);
+    }
 
     @Override
     public String toJson() {
@@ -59,8 +67,16 @@ record JSONObject(Map<String, JSONValue> values) implements JSONValue {
 
 /**
  * JSON array type containing ordered values.
+ * Uses immutable List to prevent accidental modification of record data.
  */
 record JSONArray(List<JSONValue> values) implements JSONValue {
+
+    /**
+     * Compact constructor ensures values are immutable.
+     */
+    public JSONArray {
+        values = List.copyOf(values);
+    }
 
     @Override
     public String toJson() {

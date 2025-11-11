@@ -41,8 +41,8 @@ public class SQLTextBlocksExample {
             FROM users u
             JOIN orders o ON u.id = o.user_id
             WHERE o.status = '%s'
-              AND o.total > %.2f
-            ORDER BY o.created_at DESC""".formatted(status, minTotal);
+              AND o.total > %s
+            ORDER BY o.created_at DESC""".formatted(status, String.format("%.2f", minTotal));
     }
 
     // Complex query with CTEs

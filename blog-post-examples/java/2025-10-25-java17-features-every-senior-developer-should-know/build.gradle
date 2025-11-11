@@ -24,6 +24,10 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+
+    // Set JVM locale to English (US) for consistent number formatting
+    // This ensures Double.toString() and String.format() use . as decimal separator
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 application {
@@ -35,6 +39,7 @@ task runHelloWorld(type: JavaExec) {
     description = 'Run Hello World application'
     mainClass = 'dev.nmac.blog.examples.java17.HelloWorld'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 // Part 1: var keyword examples
@@ -43,6 +48,7 @@ task runVarCollections(type: JavaExec) {
     description = 'Run var with collections example'
     mainClass = 'dev.nmac.blog.examples.java17.part1.VarCollectionsExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runVarAnonymousClass(type: JavaExec) {
@@ -50,6 +56,7 @@ task runVarAnonymousClass(type: JavaExec) {
     description = 'Run var with anonymous classes example'
     mainClass = 'dev.nmac.blog.examples.java17.part1.VarAnonymousClassExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runVarIntersectionTypes(type: JavaExec) {
@@ -57,6 +64,7 @@ task runVarIntersectionTypes(type: JavaExec) {
     description = 'Run var with intersection types example'
     mainClass = 'dev.nmac.blog.examples.java17.part1.VarIntersectionTypesExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runVarLimitations(type: JavaExec) {
@@ -64,6 +72,7 @@ task runVarLimitations(type: JavaExec) {
     description = 'Run var limitations and pitfalls example'
     mainClass = 'dev.nmac.blog.examples.java17.part1.VarLimitationsExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runDataProcessorSolution(type: JavaExec) {
@@ -71,6 +80,7 @@ task runDataProcessorSolution(type: JavaExec) {
     description = 'Run DataProcessor solution (exercise)'
     mainClass = 'dev.nmac.blog.examples.java17.part1.exercises.DataProcessorSolution'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runAllPart1Examples {
@@ -92,6 +102,7 @@ task runBasicRecordExample(type: JavaExec) {
     description = 'Run basic records example'
     mainClass = 'dev.nmac.blog.examples.java17.part2.BasicRecordExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runGenericRecordExample(type: JavaExec) {
@@ -99,6 +110,7 @@ task runGenericRecordExample(type: JavaExec) {
     description = 'Run generic records example'
     mainClass = 'dev.nmac.blog.examples.java17.part2.GenericRecordExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runRecordMethodsExample(type: JavaExec) {
@@ -106,6 +118,7 @@ task runRecordMethodsExample(type: JavaExec) {
     description = 'Run records with custom methods example'
     mainClass = 'dev.nmac.blog.examples.java17.part2.RecordMethodsExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runRecordInterfaceExample(type: JavaExec) {
@@ -113,6 +126,7 @@ task runRecordInterfaceExample(type: JavaExec) {
     description = 'Run records implementing interfaces example'
     mainClass = 'dev.nmac.blog.examples.java17.part2.RecordInterfaceExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runNestedRecordsExample(type: JavaExec) {
@@ -120,6 +134,7 @@ task runNestedRecordsExample(type: JavaExec) {
     description = 'Run nested records example'
     mainClass = 'dev.nmac.blog.examples.java17.part2.NestedRecordsExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runRecordPerformanceExample(type: JavaExec) {
@@ -127,6 +142,7 @@ task runRecordPerformanceExample(type: JavaExec) {
     description = 'Run record performance examples'
     mainClass = 'dev.nmac.blog.examples.java17.part2.RecordPerformanceExample'
     classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 task runAllPart2Examples {

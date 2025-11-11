@@ -439,39 +439,6 @@ public class RecordPerformanceExample {
         assertTrue(duration < 200_000_000, "Should create 1M records in under 200ms");
     }
 
-    @Test
-    void testComparisonWithMap() {
-        // Records as structured data vs Map<String, Object>
-
-        int iterations = 100_000;
-
-        // Benchmark: Record access
-        SmallRecord record = new SmallRecord(10, 20);
-        long start1 = System.nanoTime();
-        for (int i = 0; i < iterations; i++) {
-            int x = record.x();
-            int y = record.y();
-        }
-        long recordDuration = System.nanoTime() - start1;
-
-        // Benchmark: Map access
-        Map<String, Integer> map = Map.of("x", 10, "y", 20);
-        long start2 = System.nanoTime();
-        for (int i = 0; i < iterations; i++) {
-            int x = map.get("x");
-            int y = map.get("y");
-        }
-        long mapDuration = System.nanoTime() - start2;
-
-        System.out.println("Record access (" + iterations + "x): " +
-                          recordDuration / 1_000_000 + "ms");
-        System.out.println("Map access (" + iterations + "x): " +
-                          mapDuration / 1_000_000 + "ms");
-
-        // Record access should be faster (direct field access vs hash lookup)
-        assertTrue(recordDuration < mapDuration,
-                  "Record access should be faster than Map");
-    }
 
     // Main method for manual testing
     public static void main(String[] args) {

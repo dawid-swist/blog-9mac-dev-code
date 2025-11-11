@@ -16,6 +16,7 @@ dependencies {
     implementation "org.springframework:spring-context:${springVersion}"
     implementation "org.springframework:spring-core:${springVersion}"
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 java {
@@ -29,24 +30,31 @@ application {
 
 test {
     useJUnitPlatform()
+
+    // Set JVM locale to English (US) for consistent number formatting
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 tasks.register('runCoffeePureApp', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'dev.nmac.blog.examples.springframework6.CoffeePureApp'
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 tasks.register('runCoffeeSpiApp', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'dev.nmac.blog.examples.springframework6.CoffeeSpiApp'
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 tasks.register('runCoffeeSpring XmlApp', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'dev.nmac.blog.examples.springframework6.CoffeeXmlApp'
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }
 
 tasks.register('runCoffeeSpringConfigApp', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'dev.nmac.blog.examples.springframework6.CoffeeSpringConfigApp'
+    jvmArgs = ['-Duser.language=en', '-Duser.country=US']
 }

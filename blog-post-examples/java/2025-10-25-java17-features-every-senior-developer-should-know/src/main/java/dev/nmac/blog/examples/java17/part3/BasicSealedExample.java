@@ -6,63 +6,63 @@ import java.util.List;
  * Example 1: Basic Sealed Classes with Shape Hierarchy
  *
  * Demonstrates:
- * - Sealed abstract class with permits clause
- * - Final implementations as permitted subtypes
- * - Validation in constructors
+ * - Sealed interface with permits clause
+ * - Record implementations as permitted subtypes
+ * - Compact constructor validation
  * - Reflection API for sealed types
- * - Type-specific accessor methods
+ * - Records provide implicit immutability and built-in accessors
  *
- * Key concept: Sealed classes provide controlled inheritance hierarchies where
- * the compiler knows all possible subtypes, enabling exhaustive pattern matching
- * and preventing unauthorized extensions.
+ * Key concept: Sealed interfaces combined with records create elegant,
+ * immutable domain models where the compiler knows all possible subtypes,
+ * enabling exhaustive pattern matching and preventing unauthorized extensions.
  */
 
 // ============================================================================
-// Sealed parent class - explicitly lists all permitted subtypes
+// Sealed interface - explicitly lists all permitted subtypes
 // ============================================================================
 
 /**
- * Sealed abstract Shape class that permits only Circle, Rectangle, and Triangle.
- * This creates a closed hierarchy where no other classes can extend Shape.
+ * Sealed Shape interface that permits only Circle, Rectangle, and Triangle.
+ * This creates a closed hierarchy where no other implementations can be added.
  */
-sealed abstract class Shape
+sealed interface Shape
     permits Circle, Rectangle, Triangle {
 
     /**
-     * Abstract method to calculate the area of the shape.
-     * Must be implemented by all permitted subclasses.
+     * Calculates the area of the shape.
+     *
+     * @return the area value
      */
-    public abstract double area();
+    double area();
 
     /**
-     * Abstract method to provide a human-readable description of the shape.
-     * Must be implemented by all permitted subclasses.
+     * Provides a human-readable description of the shape.
+     *
+     * @return formatted description string
      */
-    public abstract String describe();
+    String describe();
 }
 
 // ============================================================================
-// Final implementations - leaf classes in the sealed hierarchy
+// Record implementations - permitted sealed types
 // ============================================================================
 
 /**
- * Circle implementation with radius validation.
- * Final modifier prevents any further subclassing.
+ * Circle record implementation with radius validation.
+ * Records are implicitly final, making them perfect sealed type implementations.
  */
-final class Circle extends Shape {
-    private final double radius;
+record Circle(double radius) implements Shape {
 
     /**
-     * Creates a Circle with the specified radius.
+     * Compact constructor validates that radius is positive.
+     * Records automatically assign the validated value to the field.
      *
-     * @param radius the radius of the circle (must be positive)
      * @throws IllegalArgumentException if radius is not positive
      */
-    public Circle(double radius) {
+    public Circle {
         if (radius <= 0) {
             throw new IllegalArgumentException("Radius must be positive");
         }
-        this.radius = radius;
     }
 
     /**
@@ -84,38 +84,24 @@ final class Circle extends Shape {
     public String describe() {
         return String.format("Circle[radius=%.2f, area=%.2f]", radius, area());
     }
-
-    /**
-     * Accessor for the radius component.
-     *
-     * @return the radius of the circle
-     */
-    public double radius() {
-        return radius;
-    }
 }
 
 /**
- * Rectangle implementation with width and height validation.
- * Final modifier prevents any further subclassing.
+ * Rectangle record implementation with dimension validation.
+ * Records are implicitly final, making them perfect sealed type implementations.
  */
-final class Rectangle extends Shape {
-    private final double width;
-    private final double height;
+record Rectangle(double width, double height) implements Shape {
 
     /**
-     * Creates a Rectangle with the specified dimensions.
+     * Compact constructor validates that both dimensions are positive.
+     * Records automatically assign the validated values to the fields.
      *
-     * @param width  the width of the rectangle (must be positive)
-     * @param height the height of the rectangle (must be positive)
      * @throws IllegalArgumentException if either dimension is not positive
      */
-    public Rectangle(double width, double height) {
+    public Rectangle {
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException("Dimensions must be positive");
         }
-        this.width = width;
-        this.height = height;
     }
 
     /**
@@ -138,47 +124,24 @@ final class Rectangle extends Shape {
         return String.format("Rectangle[width=%.2f, height=%.2f, area=%.2f]",
             width, height, area());
     }
-
-    /**
-     * Accessor for the width component.
-     *
-     * @return the width of the rectangle
-     */
-    public double width() {
-        return width;
-    }
-
-    /**
-     * Accessor for the height component.
-     *
-     * @return the height of the rectangle
-     */
-    public double height() {
-        return height;
-    }
 }
 
 /**
- * Triangle implementation with base and height validation.
- * Final modifier prevents any further subclassing.
+ * Triangle record implementation with dimension validation.
+ * Records are implicitly final, making them perfect sealed type implementations.
  */
-final class Triangle extends Shape {
-    private final double base;
-    private final double height;
+record Triangle(double base, double height) implements Shape {
 
     /**
-     * Creates a Triangle with the specified dimensions.
+     * Compact constructor validates that both dimensions are positive.
+     * Records automatically assign the validated values to the fields.
      *
-     * @param base   the base of the triangle (must be positive)
-     * @param height the height of the triangle (must be positive)
      * @throws IllegalArgumentException if either dimension is not positive
      */
-    public Triangle(double base, double height) {
+    public Triangle {
         if (base <= 0 || height <= 0) {
             throw new IllegalArgumentException("Dimensions must be positive");
         }
-        this.base = base;
-        this.height = height;
     }
 
     /**
@@ -200,24 +163,6 @@ final class Triangle extends Shape {
     public String describe() {
         return String.format("Triangle[base=%.2f, height=%.2f, area=%.2f]",
             base, height, area());
-    }
-
-    /**
-     * Accessor for the base component.
-     *
-     * @return the base of the triangle
-     */
-    public double base() {
-        return base;
-    }
-
-    /**
-     * Accessor for the height component.
-     *
-     * @return the height of the triangle
-     */
-    public double height() {
-        return height;
     }
 }
 
@@ -253,8 +198,8 @@ public class BasicSealedExample {
             System.out.println(shape.describe());
         }
 
-        // Type-specific operations using accessor methods
-        System.out.println("\n=== Type-Specific Access ===");
+        // Type-specific access - records provide automatic accessors
+        System.out.println("\n=== Type-Specific Access (Record Accessors) ===");
         var circle = new Circle(10.0);
         System.out.println("Circle radius: " + circle.radius());
 
@@ -262,7 +207,7 @@ public class BasicSealedExample {
         System.out.println("Rectangle dimensions: " + rect.width() + " x " + rect.height());
 
         // Reflection API - discovering sealed hierarchy at runtime
-        System.out.println("\n=== Reflection ===");
+        System.out.println("\n=== Reflection API ===");
         System.out.println("Shape is sealed: " + Shape.class.isSealed());
         System.out.print("Permitted subclasses: ");
         for (var permitted : Shape.class.getPermittedSubclasses()) {

@@ -1,2 +1,3 @@
 include('blog-post-examples:spring-framework-6:2025-05-16-CoffeeApp')
 include('blog-post-examples:java:2025-10-25-java17-features-every-senior-developer-should-know')
+include('blog-post-examples:java:2025-11-08-java9-module-system')

@@ -64,11 +64,11 @@ public class CombinedFeaturesExample {
     // Pattern matching for instanceof
     public static String processPaymentResult(PaymentResult result) {
         if (result instanceof Success s) {
-            return "Payment successful: $%.2f (TX: %s)".formatted(s.amount(), s.transactionId());
+            return "Payment successful: $" + String.format("%.2f", s.amount()) + " (TX: " + s.transactionId() + ")";
         } else if (result instanceof Failure f) {
-            return "Payment failed [%s]: %s".formatted(f.errorCode(), f.message());
+            return "Payment failed [" + f.errorCode() + "]: " + f.message();
         } else if (result instanceof Pending p) {
-            return "Payment pending: %s".formatted(p.reason());
+            return "Payment pending: " + p.reason();
         }
         return "Unknown result";
     }
@@ -78,11 +78,11 @@ public class CombinedFeaturesExample {
         // This uses instanceof pattern matching within if-else
         // Future Java versions will support pattern matching directly in switch
         if (result instanceof Success(var txId, var amount)) {
-            return "✓ Success: $%.2f (TX: %s)".formatted(amount, txId);
+            return "Success: $" + String.format("%.2f", amount) + " (TX: " + txId + ")";
         } else if (result instanceof Failure(var code, var msg)) {
-            return "✗ Failed [%s]: %s".formatted(code, msg);
+            return "Failed [" + code + "]: " + msg;
         } else if (result instanceof Pending(var reason)) {
-            return "⧗ Pending: %s".formatted(reason);
+            return "Pending: " + reason;
         }
         return "Unknown";
     }
