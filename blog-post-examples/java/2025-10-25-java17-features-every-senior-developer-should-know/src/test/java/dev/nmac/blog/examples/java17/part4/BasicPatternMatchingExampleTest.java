@@ -62,28 +62,27 @@ class BasicPatternMatchingExampleTest {
     }
 
     @Test
-    @DisplayName("Should respect pattern variable scope with logical AND")
-    void shouldRespectPatternVariableScopeWithAnd() {
-        String result = BasicPatternMatchingExample.demonstrateScope("HelloWorld");
+    @DisplayName("Pattern variable in scope after instanceof check")
+    void shouldHavePatternVariableInScope() {
+        String result = BasicPatternMatchingExample.demonstrateScope("Hello");
 
-        assertEquals("Long string: HELLOWORLD", result);
+        assertEquals("String: Hello", result);
     }
 
     @Test
-    @DisplayName("Should handle short strings correctly in scope demonstration")
-    void shouldHandleShortStringsInScopeDemo() {
-        String result = BasicPatternMatchingExample.demonstrateScope("Hi");
+    @DisplayName("Pattern variable in scope with && (AND) operator")
+    void shouldHavePatternVariableWithAnd() {
+        String result = BasicPatternMatchingExample.demonstrateScope(42);
 
-        // Short string (length <= 5) fails the length check, goes to else block
-        assertEquals("String in else block: Hi", result);
+        assertEquals("Positive integer: 42", result);
     }
 
     @Test
-    @DisplayName("Should handle non-String types in scope demonstration")
-    void shouldHandleNonStringInScopeDemo() {
-        String result = BasicPatternMatchingExample.demonstrateScope(123);
+    @DisplayName("Pattern variable NOT in scope when condition fails")
+    void shouldHandleNonMatchingType() {
+        String result = BasicPatternMatchingExample.demonstrateScope(-5);
 
-        assertEquals("Not a string", result);
+        assertEquals("Something else", result);
     }
 
     @Test
@@ -108,5 +107,45 @@ class BasicPatternMatchingExampleTest {
         String result = BasicPatternMatchingExample.handleNull(42);
 
         assertEquals("null or not a String", result);
+    }
+
+    @Test
+    @DisplayName("Should validate non-empty String (first condition)")
+    void shouldValidateNonEmptyString() {
+        String result = BasicPatternMatchingExample.demonstrateOrProblem("Hello");
+
+        assertEquals("Valid string: Hello", result);
+    }
+
+    @Test
+    @DisplayName("Should reject empty String (fails first condition)")
+    void shouldRejectEmptyString() {
+        String result = BasicPatternMatchingExample.demonstrateOrProblem("");
+
+        assertEquals("Invalid", result);
+    }
+
+    @Test
+    @DisplayName("Should accept valid defaults like Integer (second condition)")
+    void shouldAcceptValidDefaults() {
+        String intResult = BasicPatternMatchingExample.demonstrateOrProblem(42);
+        String boolResult = BasicPatternMatchingExample.demonstrateOrProblem(true);
+
+        assertEquals("Valid default", intResult);
+        assertEquals("Valid default", boolResult);
+    }
+
+    @Test
+    @DisplayName("Should handle String OR trusted source with separate checks")
+    void shouldHandleStringOrTrusted() {
+        String validString = BasicPatternMatchingExample.handleStringOrTrusted("Hello");
+        String emptyString = BasicPatternMatchingExample.handleStringOrTrusted("");
+        String trustedInt = BasicPatternMatchingExample.handleStringOrTrusted(42);
+        String untrustedDouble = BasicPatternMatchingExample.handleStringOrTrusted(3.14);
+
+        assertEquals("Processed string: Hello", validString);
+        assertEquals("Rejected", emptyString);
+        assertEquals("Accepted from trusted source", trustedInt);
+        assertEquals("Rejected", untrustedDouble);
     }
 }

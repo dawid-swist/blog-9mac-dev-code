@@ -27,3 +27,4 @@ build
 /.idea/
 .gradle/
 .claude/
+/GEMINI.md
